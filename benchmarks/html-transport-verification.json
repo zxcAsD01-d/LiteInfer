@@ -1,0 +1,20 @@
+{
+  "status": "passed",
+  "scope": "Private HTML fixture transferred through Anthropic stream and tool receipt; source material excluded from repository",
+  "results": [
+    {
+      "profile": "80M-MLX-q4",
+      "streamed_bytes": 32378,
+      "completion_tokens": 14878,
+      "full_arguments_counted": true,
+      "tool_receipt": "passed"
+    },
+    {
+      "profile": "200M-MLX-q4",
+      "streamed_bytes": 32378,
+      "completion_tokens": 12346,
+      "full_arguments_counted": true,
+      "tool_receipt": "passed"
+    }
+  ]
+}

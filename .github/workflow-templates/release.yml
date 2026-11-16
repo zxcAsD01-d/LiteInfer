@@ -1,0 +1,31 @@
+name: Release macOS
+on:
+  push:
+    tags: ['v*']
+permissions:
+  contents: write
+jobs:
+  build:
+    runs-on: macos-latest
+    strategy:
+      matrix:
+        target: [aarch64-apple-darwin, x86_64-apple-darwin]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
+      - run: cargo build --release --locked --target ${{ matrix.target }}
+      - name: Package
+        run: |
+          mkdir -p dist
+          cp target/${{ matrix.target }}/release/liteinfer dist/
+          cp LICENSE README.md dist/
+          cp -R examples docs dist/
+          tar -czf liteinfer-${{ matrix.target }}.tar.gz -C dist .
+          shasum -a 256 liteinfer-${{ matrix.target }}.tar.gz > liteinfer-${{ matrix.target }}.tar.gz.sha256
+      - uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            liteinfer-${{ matrix.target }}.tar.gz
+            liteinfer-${{ matrix.target }}.tar.gz.sha256

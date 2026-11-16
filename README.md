@@ -1,2 +1,116 @@
 # LiteInfer
-A Lite AI Infer
+
+**为 macOS 本地模型提供轻量、可观测的 Rust API 服务。**
+
+一个入口连接 MLX、llama.cpp 等 OpenAI 兼容推理后端，向客户端提供 OpenAI 和 Anthropic Messages 格式。默认仅监听本机，3 路并发，带有有界队列、流式背压、API Key 管理和中文控制台。
+
+LiteInfer 的服务核心使用 Rust；模型计算由独立推理后端执行。它不是新的模型训练框架，也不把协议兼容等同于模型拥有相应能力。
+
+## 功能
+
+- **双协议**：OpenAI Chat Completions / Completions，Anthropic Messages；JSON 和 SSE。
+- **通用模型注册**：公开别名映射实际模型和后端，不硬编码模型架构。
+- **资源控制**：默认 3 活跃 + 24 等待，FIFO 准入、超时、取消和过载 429。
+- **流式管线**：共享连接池、UTF-8 安全解析、8 块背压通道、大小预算和断连回收。
+- **工具调用**：转发 OpenAI function tools；转换 Anthropic tool_use / tool_result 和 JSON 参数增量。
+- **真实统计**：使用后端返回的 token 用量；不以字符数估算，不伪造缺失用量。
+- **中文控制台**：创建/撤销 Key，查看运行指标、最近请求和 token 用量。
+- **隐私默认值**：Key 只保存 SHA-256；请求日志不保存正文、工具参数、密钥或上游错误原文。
+
+## 快速开始
+
+准备 Rust 1.85+ 和一个已启动的 OpenAI 兼容后端。Apple Silicon 推荐使用支持 Metal 的 MLX 或 llama.cpp 后端；Intel Mac 可连接适配其硬件的后端。
+
+```sh
+git clone https://github.com/zxcAsD01-d/LiteInfer.git
+cd LiteInfer
+cargo build --release --locked
+cp examples/config.toml config.toml
+```
+
+编辑 `config.toml` 的 `models`：将 `upstream_model`、`base_url` 改为后端实际值，然后创建访问密钥：
+
+```sh
+./target/release/liteinfer check
+./target/release/liteinfer key create --name local-client
+```
+
+保存命令返回的 `key`，它只显示一次。为控制台生成独立管理密钥，再启动：
+
+```sh
+export LITEINFER_ADMIN_KEY="$(openssl rand -hex 32)"
+# 在自己的密码管理器保存该环境变量值，勿提交到仓库。
+./target/release/liteinfer serve
+```
+
+打开 `http://127.0.0.1:8787/`，输入管理密钥即可管理 Key 和请求。API Key 与管理密钥分开。也可以设置 `LITEINFER_API_KEY`（至少24字符）作为环境Key，省略创建步骤。
+
+## 请求示例
+
+把创建的Key放入本地环境变量 `LITEINFER_API_KEY`。示例模型名与 `examples/config.toml` 一致。
+
+```sh
+curl http://127.0.0.1:8787/v1/chat/completions \
+  -H "Authorization: Bearer $LITEINFER_API_KEY" \
+  -H 'Content-Type: application/json' \
+  -d '{"model":"local-model","messages":[{"role":"user","content":"你好"}],"max_tokens":128}'
+```
+
+Anthropic 格式：
+
+```sh
+curl -N http://127.0.0.1:8787/v1/messages \
+  -H "x-api-key: $LITEINFER_API_KEY" \
+  -H 'anthropic-version: 2023-06-01' \
+  -H 'Content-Type: application/json' \
+  -d '{"model":"local-model","max_tokens":128,"messages":[{"role":"user","content":"你好"}],"stream":true}'
+```
+
+OpenAI Python SDK：
+
+```python
+import os
+from openai import OpenAI
+
+client = OpenAI(base_url="http://127.0.0.1:8787/v1", api_key=os.environ["LITEINFER_API_KEY"])
+response = client.chat.completions.create(
+    model="local-model", messages=[{"role": "user", "content": "你好"}], max_tokens=128
+)
+print(response.choices[0].message.content)
+```
+
+Anthropic Python SDK（本地不需要 Anthropic 云端 Key）：
+
+```python
+import os
+from anthropic import Anthropic
+
+client = Anthropic(base_url="http://127.0.0.1:8787", api_key=os.environ["LITEINFER_API_KEY"])
+with client.messages.stream(model="local-model", max_tokens=128,
+                            messages=[{"role": "user", "content": "你好"}]) as stream:
+    for text in stream.text_stream:
+        print(text, end="", flush=True)
+    print(stream.get_final_message().usage)
+```
+
+## 兼容边界
+
+支持标准 Messages 交互不代表实现全部 Anthropic 云端功能。`thinking`、PDF、服务端工具、beta、Responses API 暂不支持；`/v1/messages/count_tokens` 返回501。图片和工具需要模型本身具备能力并在配置启用。
+
+流式输入用量在上游只提供末尾统计时，`message_start` 使用0占位，`message_delta` 返回实际输入和输出计数。后端必须支持流式usage和完成事件；缺失时返回错误。具体字段、停止原因和扩展限制见[兼容矩阵](docs/compatibility.md)。
+
+## 文档与验证
+
+- [文档导航](docs/README.md)：配置、后端、部署、架构、协议与迁移。
+- [压测方法与结果](docs/testing.md)：区分模拟服务开销和真实模型推理；不把模拟 token 当成模型吞吐。
+- [安全与隐私](SECURITY.md)：公开内容、密钥、日志与部署边界。
+- [贡献指南](CONTRIBUTING.md)：检查命令和代码原则。
+
+```sh
+cargo fmt --all -- --check
+cargo clippy --all-targets --locked -- -D warnings
+cargo test --all-targets --locked
+python3 scripts/privacy_check.py
+```
+
+MIT 许可证仅覆盖本项目代码。模型权重和第三方后端分别遵守其许可证，仓库不包含模型、用户素材、私人配置或历史请求。

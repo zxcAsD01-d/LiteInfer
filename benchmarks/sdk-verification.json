@@ -1,0 +1,31 @@
+{
+  "status": "passed",
+  "backends": [
+    "synthetic",
+    "80M-MLX-q4",
+    "200M-MLX-q4"
+  ],
+  "results": [
+    {
+      "status": "passed",
+      "cases": 4,
+      "openai": "3.51.0",
+      "anthropic": "2.8.0",
+      "scope": "Official SDK JSON and accumulated streaming message usage"
+    },
+    {
+      "status": "passed",
+      "cases": 4,
+      "openai": "3.51.0",
+      "anthropic": "2.8.0",
+      "scope": "Official SDK JSON and accumulated streaming message usage"
+    },
+    {
+      "status": "passed",
+      "cases": 4,
+      "openai": "3.51.0",
+      "anthropic": "2.8.0",
+      "scope": "Official SDK JSON and accumulated streaming message usage"
+    }
+  ]
+}

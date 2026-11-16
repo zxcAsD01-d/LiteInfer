@@ -1,0 +1,202 @@
+{
+  "status": "passed",
+  "scope": "Existing local MLX backends behind Rust release; model quality not evaluated; counters include 8 SDK smoke requests",
+  "total_requests": 120,
+  "results": [
+    {
+      "label": "real-model",
+      "protocol": "openai",
+      "stream": false,
+      "requests": 15,
+      "client_concurrency": 10,
+      "statuses": {
+        "200": 15
+      },
+      "elapsed_seconds": 1.562,
+      "successful_requests_per_second": 9.606,
+      "latency_ms": {
+        "mean": 849.642,
+        "p50": 803.704,
+        "p95": 1270.749,
+        "p99": 1270.749
+      },
+      "ttft_ms_p95": null,
+      "backend_reported_output_tokens": 380,
+      "note": "Synthetic tokens are fixtures, not model throughput. Real counts are reported by the configured backend.",
+      "backend_profile": "80M-SFT-MLX-q4"
+    },
+    {
+      "label": "real-model",
+      "protocol": "openai",
+      "stream": true,
+      "requests": 15,
+      "client_concurrency": 10,
+      "statuses": {
+        "200": 15
+      },
+      "elapsed_seconds": 1.054,
+      "successful_requests_per_second": 14.234,
+      "latency_ms": {
+        "mean": 513.736,
+        "p50": 573.218,
+        "p95": 712.701,
+        "p99": 712.701
+      },
+      "ttft_ms_p95": 498.365,
+      "backend_reported_output_tokens": 417,
+      "note": "Synthetic tokens are fixtures, not model throughput. Real counts are reported by the configured backend.",
+      "backend_profile": "80M-SFT-MLX-q4"
+    },
+    {
+      "label": "real-model",
+      "protocol": "anthropic",
+      "stream": false,
+      "requests": 15,
+      "client_concurrency": 10,
+      "statuses": {
+        "200": 15
+      },
+      "elapsed_seconds": 1.03,
+      "successful_requests_per_second": 14.567,
+      "latency_ms": {
+        "mean": 507.59,
+        "p50": 583.014,
+        "p95": 739.845,
+        "p99": 739.845
+      },
+      "ttft_ms_p95": null,
+      "backend_reported_output_tokens": 381,
+      "note": "Synthetic tokens are fixtures, not model throughput. Real counts are reported by the configured backend.",
+      "backend_profile": "80M-SFT-MLX-q4"
+    },
+    {
+      "label": "real-model",
+      "protocol": "anthropic",
+      "stream": true,
+      "requests": 15,
+      "client_concurrency": 10,
+      "statuses": {
+        "200": 15
+      },
+      "elapsed_seconds": 1.023,
+      "successful_requests_per_second": 14.67,
+      "latency_ms": {
+        "mean": 504.117,
+        "p50": 557.092,
+        "p95": 774.172,
+        "p99": 774.172
+      },
+      "ttft_ms_p95": 538.638,
+      "backend_reported_output_tokens": 411,
+      "note": "Synthetic tokens are fixtures, not model throughput. Real counts are reported by the configured backend.",
+      "backend_profile": "80M-SFT-MLX-q4"
+    },
+    {
+      "label": "real-model",
+      "protocol": "openai",
+      "stream": false,
+      "requests": 15,
+      "client_concurrency": 10,
+      "statuses": {
+        "200": 15
+      },
+      "elapsed_seconds": 1.112,
+      "successful_requests_per_second": 13.488,
+      "latency_ms": {
+        "mean": 568.847,
+        "p50": 620.185,
+        "p95": 743.596,
+        "p99": 743.596
+      },
+      "ttft_ms_p95": null,
+      "backend_reported_output_tokens": 332,
+      "note": "Synthetic tokens are fixtures, not model throughput. Real counts are reported by the configured backend.",
+      "backend_profile": "200M-SFT-MLX-q4"
+    },
+    {
+      "label": "real-model",
+      "protocol": "openai",
+      "stream": true,
+      "requests": 15,
+      "client_concurrency": 10,
+      "statuses": {
+        "200": 15
+      },
+      "elapsed_seconds": 1.188,
+      "successful_requests_per_second": 12.626,
+      "latency_ms": {
+        "mean": 604.744,
+        "p50": 678.587,
+        "p95": 909.443,
+        "p99": 909.443
+      },
+      "ttft_ms_p95": 674.508,
+      "backend_reported_output_tokens": 450,
+      "note": "Synthetic tokens are fixtures, not model throughput. Real counts are reported by the configured backend.",
+      "backend_profile": "200M-SFT-MLX-q4"
+    },
+    {
+      "label": "real-model",
+      "protocol": "anthropic",
+      "stream": false,
+      "requests": 15,
+      "client_concurrency": 10,
+      "statuses": {
+        "200": 15
+      },
+      "elapsed_seconds": 1.071,
+      "successful_requests_per_second": 14.005,
+      "latency_ms": {
+        "mean": 520.488,
+        "p50": 577.167,
+        "p95": 711.86,
+        "p99": 711.86
+      },
+      "ttft_ms_p95": null,
+      "backend_reported_output_tokens": 364,
+      "note": "Synthetic tokens are fixtures, not model throughput. Real counts are reported by the configured backend.",
+      "backend_profile": "200M-SFT-MLX-q4"
+    },
+    {
+      "label": "real-model",
+      "protocol": "anthropic",
+      "stream": true,
+      "requests": 15,
+      "client_concurrency": 10,
+      "statuses": {
+        "200": 15
+      },
+      "elapsed_seconds": 1.069,
+      "successful_requests_per_second": 14.027,
+      "latency_ms": {
+        "mean": 533.802,
+        "p50": 617.464,
+        "p95": 758.55,
+        "p99": 758.55
+      },
+      "ttft_ms_p95": 524.951,
+      "backend_reported_output_tokens": 374,
+      "note": "Synthetic tokens are fixtures, not model throughput. Real counts are reported by the configured backend.",
+      "backend_profile": "200M-SFT-MLX-q4"
+    }
+  ],
+  "final_metrics": {
+    "limits": {
+      "concurrency": 3,
+      "queue": 24
+    },
+    "metrics": {
+      "active": 0,
+      "cancelled": 0,
+      "completed": 128,
+      "completion_tokens": 3223,
+      "failed": 0,
+      "peak_active": 3,
+      "prompt_tokens": 2252,
+      "queued": 0,
+      "records_dropped": 0,
+      "rejected": 0
+    },
+    "service": "LiteInfer"
+  }
+}

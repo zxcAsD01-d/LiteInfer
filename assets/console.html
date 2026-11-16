@@ -1,0 +1,9 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="icon" href="data:,"><title>LiteInfer · 本地推理</title><link rel="stylesheet" href="/assets/console.css"></head><body>
+<header><div><h1>LiteInfer</h1><p>本地模型，一个轻量入口。</p></div><span class="badge">Rust / OpenAI / Anthropic</span></header>
+<section class="panel"><h2>连接管理服务</h2><p>管理密钥只保存在当前页面内存中。请求内容和 API 密钥不会写入请求日志。</p><div class="row"><input id="admin" type="password" placeholder="LITEINFER_ADMIN_KEY" autocomplete="off"><button id="refresh">连接 / 刷新</button></div><p id="status" role="status"></p></section>
+<section class="panel"><h2>运行概况</h2><div class="metrics" id="metrics"><small>连接后显示运行数据</small></div></section>
+<section class="panel"><h2>API Key</h2><div class="row"><input id="name" placeholder="新 Key 名称" maxlength="128"><button id="create">创建 Key</button></div><p id="secret"></p><div class="scroll"><table><thead><tr><th>名称</th><th>ID</th><th>状态</th><th>操作</th></tr></thead><tbody id="keys"></tbody></table></div></section>
+<section class="panel"><h2>最近请求</h2><small>仅记录模型、状态、耗时和后端返回的 token 用量。</small><div class="scroll"><table><thead><tr><th>模型</th><th>协议</th><th>状态</th><th>输入</th><th>输出</th><th>耗时</th></tr></thead><tbody id="requests"></tbody></table></div></section>
+<footer><p>OpenAI Base URL：<code>/v1</code> · Anthropic：<code>/v1/messages</code><br>推理速度与模型能力取决于配置的本地后端。</p></footer>
+<script src="/assets/console.js" defer></script></body></html>

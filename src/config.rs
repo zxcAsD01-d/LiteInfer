@@ -17,6 +17,25 @@ pub struct Config {
     pub database: String,
     pub allow_remote: bool,
     pub models: Vec<Model>,
+    pub mlx: MlxConfig,
+}
+
+#[derive(Clone, Debug, Deserialize, Serialize)]
+#[serde(default, deny_unknown_fields)]
+pub struct MlxConfig {
+    pub python: String,
+    pub directory: String,
+    pub task_timeout_seconds: u64,
+}
+
+impl Default for MlxConfig {
+    fn default() -> Self {
+        Self {
+            python: "python3".into(),
+            directory: ".liteinfer/mlx".into(),
+            task_timeout_seconds: 7200,
+        }
+    }
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
@@ -35,6 +54,8 @@ pub struct Model {
     pub vision: bool,
     #[serde(default)]
     pub cache_isolation_parameter: Option<String>,
+    #[serde(default)]
+    pub context_length: Option<u64>,
 }
 
 fn default_output() -> u32 {
@@ -57,6 +78,7 @@ impl Default for Config {
             database: ".liteinfer/state.sqlite3".into(),
             allow_remote: false,
             models: vec![],
+            mlx: MlxConfig::default(),
         }
     }
 }
@@ -81,8 +103,11 @@ impl Config {
         {
             return Err("超时和大小预算必须大于 0".into());
         }
-        if self.models.is_empty() {
-            return Err("至少配置一个模型".into());
+        if self.mlx.python.trim().is_empty()
+            || self.mlx.directory.trim().is_empty()
+            || self.mlx.task_timeout_seconds == 0
+        {
+            return Err("MLX Python、目录和任务超时配置无效".into());
         }
         let mut ids = HashSet::new();
         for model in &self.models {
@@ -126,12 +151,15 @@ impl Config {
 }
 
 impl Model {
-    fn validate(&self) -> Result<(), String> {
+    pub fn validate(&self) -> Result<(), String> {
         if self.id.trim().is_empty()
             || self.upstream_model.trim().is_empty()
             || self.max_output_tokens == 0
         {
             return Err("模型名称不能为空，输出预算必须大于 0".into());
+        }
+        if self.context_length == Some(0) {
+            return Err("上下文长度必须大于零".into());
         }
         let url = reqwest::Url::parse(&self.base_url).map_err(|_| "后端 URL 无效")?;
         if !matches!(url.scheme(), "http" | "https")

@@ -55,7 +55,23 @@ async fn main() -> ExitCode {
 }
 
 async fn run(cli: Cli) -> Result<(), String> {
-    let config = Config::load(&cli.config)?;
+    let config = if !cli.config.exists() && matches!(cli.command, Command::Serve) {
+        let config = Config::default();
+        let text = toml::to_string_pretty(&config).map_err(|_| "默认配置生成失败")?;
+        use std::io::Write;
+        let mut file = std::fs::OpenOptions::new()
+            .write(true)
+            .create_new(true)
+            .open(&cli.config)
+            .map_err(|_| "默认配置创建失败，文件可能已存在")?;
+        file.write_all(text.as_bytes())
+            .and_then(|_| file.sync_all())
+            .map_err(|_| "默认配置写入失败")?;
+        tracing::info!("已生成默认配置，可从网页控制台安装模型");
+        config
+    } else {
+        Config::load(&cli.config)?
+    };
     match cli.command {
         Command::Check => {
             println!(
@@ -95,19 +111,42 @@ fn key_command(config: Config, command: KeyCommand) -> Result<(), String> {
 
 async fn serve(config: Config) -> Result<(), String> {
     let address = config.listen;
+    let admin_key = match std::env::var("LITEINFER_ADMIN_KEY") {
+        Ok(value) => value,
+        Err(_) => {
+            use rand::RngCore;
+            let mut bytes = [0u8; 32];
+            rand::rng().fill_bytes(&mut bytes);
+            let key: String = bytes.iter().map(|b| format!("{b:02x}")).collect();
+            eprintln!("当前进程管理密钥（请保存，在网页输入）：{key}");
+            key
+        }
+    };
     let state = AppState::new(
         config,
         std::env::var("LITEINFER_API_KEY").ok(),
-        std::env::var("LITEINFER_ADMIN_KEY").ok(),
+        Some(admin_key),
     )?;
     let listener = tokio::net::TcpListener::bind(address)
         .await
         .map_err(|_| "监听端口失败，请检查端口占用")?;
+    let restore_state = state.clone();
+    tokio::spawn(async move {
+        if let Err(error) = liteinfer::deployment::Deployment::restore(restore_state).await {
+            tracing::error!("恢复 MLX 模型失败：{}", error.message);
+        }
+    });
     tracing::info!("LiteInfer 已启动，监听 {address}");
-    axum::serve(listener, api::router(state))
+    let outcome = axum::serve(listener, api::router(state.clone()))
         .with_graceful_shutdown(shutdown())
         .await
-        .map_err(|_| "HTTP 服务异常退出".into())
+        .map_err(|_| "HTTP 服务异常退出".to_string());
+    state
+        .deployment
+        .close()
+        .await
+        .map_err(|_| "MLX 后端停止失败")?;
+    outcome
 }
 
 async fn shutdown() {

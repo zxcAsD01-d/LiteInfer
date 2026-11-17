@@ -25,13 +25,7 @@ pub fn prepare(
         .get("model")
         .and_then(Value::as_str)
         .ok_or_else(|| ApiError::bad("model 必须是字符串"))?;
-    let model = state
-        .config
-        .models
-        .iter()
-        .find(|m| m.id == name)
-        .cloned()
-        .ok_or_else(|| ApiError::new(StatusCode::NOT_FOUND, "模型不存在，请查询 /v1/models"))?;
+    let model = state.registry.get(name)?;
     if let Some(stream) = object.get("stream").filter(|v| !v.is_null()) {
         if !stream.is_boolean() {
             return Err(ApiError::bad("stream 必须是布尔值"));
@@ -185,6 +179,9 @@ pub async fn execute(
         .json(&body);
     if let Some(key) = state.upstream_keys.get(&model.id) {
         request = request.bearer_auth(key);
+    } else if let Some(name) = &model.api_key_env {
+        request = request
+            .bearer_auth(std::env::var(name).map_err(|_| ApiError::bad("后端密钥环境变量未设置"))?);
     }
     let upstream = match tokio::time::timeout_at(deadline, request.send()).await {
         Ok(Ok(response)) => response,

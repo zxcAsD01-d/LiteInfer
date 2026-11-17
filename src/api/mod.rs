@@ -1,5 +1,6 @@
 mod admin;
 pub mod anthropic;
+pub mod models;
 pub mod proxy;
 
 use crate::{error::ApiError, state::AppState};
@@ -22,6 +23,8 @@ pub fn router(state: Arc<AppState>) -> Router {
         .route("/",get(|| async {Html(include_str!("../../assets/console.html"))}))
         .route("/assets/console.js", get(||async {([("content-type","text/javascript; charset=utf-8")],include_str!("../../assets/console.js"))}))
         .route("/assets/console.css", get(||async {([("content-type","text/css; charset=utf-8")],include_str!("../../assets/console.css"))}))
+        .route("/assets/model-config.js", get(||async {([("content-type","text/javascript; charset=utf-8")],include_str!("../../assets/model-config.js"))}))
+        .route("/assets/models.js", get(||async {([("content-type","text/javascript; charset=utf-8")],include_str!("../../assets/models.js"))}))
         .route("/health",get(|| async {Json(json!({"status":"ok","service":"LiteInfer","version":env!("CARGO_PKG_VERSION")}))}))
         .route("/v1/models",get(models))
         .route("/v1/chat/completions",post(chat))
@@ -32,6 +35,13 @@ pub fn router(state: Arc<AppState>) -> Router {
         .route("/admin/requests",get(admin::requests))
         .route("/admin/keys",get(admin::keys).post(admin::create_key))
         .route("/admin/keys/{id}",delete(admin::revoke_key))
+        .route("/admin/models", get(models::status).post(models::register))
+        .route("/admin/mlx/runtime", get(models::runtime))
+        .route("/admin/mlx/setup", post(models::setup))
+        .route("/admin/mlx/inspect", post(models::inspect))
+        .route("/admin/mlx/prepare", post(models::prepare))
+        .route("/admin/mlx/launch", post(models::launch))
+        .route("/admin/mlx/stop", post(models::stop))
         .fallback(|| async { ApiError::new(StatusCode::NOT_FOUND,"接口不存在") })
         .layer(DefaultBodyLimit::max(maximum))
         .layer(middleware::from_fn_with_state(state.clone(), response_headers))
@@ -82,8 +92,9 @@ async fn models(
     headers: HeaderMap,
 ) -> Result<Json<Value>, ApiError> {
     state.authenticate(&headers)?;
+    crate::deployment::Deployment::reconcile(&state).await?;
     Ok(Json(
-        json!({"object":"list","data":state.config.models.iter().map(|m|json!({"id":m.id,"object":"model","created":0,"owned_by":"local"})).collect::<Vec<_>>()}),
+        json!({"object":"list","data":state.registry.list()?.iter().map(|m|json!({"id":m.id,"object":"model","created":0,"owned_by":"local","context_length":m.context_length})).collect::<Vec<_>>()}),
     ))
 }
 

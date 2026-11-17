@@ -1,0 +1,169 @@
+{
+  "date": "2026-11-17",
+  "model": "gpt-6.5astra",
+  "source": "jiaheng0815/feng-30m",
+  "precision": "q4",
+  "native_context_length": 32768,
+  "long_context_cached": {
+    "tokenizer_prompt_tokens": 32736,
+    "max_output_tokens": 16,
+    "usage": {
+      "completion_tokens": 16,
+      "prompt_tokens": 32736,
+      "prompt_tokens_details": {
+        "cached_tokens": 32731
+      },
+      "total_tokens": 32752
+    },
+    "finish_reason": "length",
+    "seconds": 3.348
+  },
+  "long_context_cold": {
+    "tokenizer_prompt_tokens": 32736,
+    "max_output_tokens": 16,
+    "usage": {
+      "completion_tokens": 15,
+      "prompt_tokens": 32736,
+      "prompt_tokens_details": {
+        "cached_tokens": 0
+      },
+      "total_tokens": 32751
+    },
+    "finish_reason": "stop",
+    "seconds": 10.182
+  },
+  "restart_restore": true,
+  "chat_eos_token_ids": [
+    0,
+    2
+  ],
+  "browser": {
+    "local_json_and_source_preview_network_requests": 0,
+    "native_context_detected": 32768,
+    "setup_prepare_and_launch": "passed",
+    "download_source": "modelscope",
+    "config_inspection_sources": [
+      "huggingface",
+      "modelscope"
+    ],
+    "launch_from_saved_artifact_without_repository": true
+  },
+  "protocol_matrix": [
+    {
+      "label": "real-model",
+      "protocol": "openai",
+      "stream": false,
+      "requests": 12,
+      "client_concurrency": 3,
+      "statuses": {
+        "200": 12
+      },
+      "elapsed_seconds": 3.233,
+      "successful_requests_per_second": 3.712,
+      "latency_ms": {
+        "mean": 784.79,
+        "p50": 294.06,
+        "p95": 1983.994,
+        "p99": 1983.994
+      },
+      "ttft_ms_p95": null,
+      "backend_reported_output_tokens": 274,
+      "note": "Synthetic tokens are fixtures, not model throughput. Real counts are reported by the configured backend."
+    },
+    {
+      "label": "real-model",
+      "protocol": "openai",
+      "stream": true,
+      "requests": 12,
+      "client_concurrency": 3,
+      "statuses": {
+        "200": 12
+      },
+      "elapsed_seconds": 1.067,
+      "successful_requests_per_second": 11.249,
+      "latency_ms": {
+        "mean": 255.499,
+        "p50": 240.83,
+        "p95": 347.606,
+        "p99": 347.606
+      },
+      "ttft_ms_p95": 199.516,
+      "backend_reported_output_tokens": 270,
+      "note": "Synthetic tokens are fixtures, not model throughput. Real counts are reported by the configured backend."
+    },
+    {
+      "label": "real-model",
+      "protocol": "anthropic",
+      "stream": false,
+      "requests": 12,
+      "client_concurrency": 3,
+      "statuses": {
+        "200": 12
+      },
+      "elapsed_seconds": 0.879,
+      "successful_requests_per_second": 13.649,
+      "latency_ms": {
+        "mean": 199.772,
+        "p50": 174.587,
+        "p95": 252.808,
+        "p99": 252.808
+      },
+      "ttft_ms_p95": null,
+      "backend_reported_output_tokens": 252,
+      "note": "Synthetic tokens are fixtures, not model throughput. Real counts are reported by the configured backend."
+    },
+    {
+      "label": "real-model",
+      "protocol": "anthropic",
+      "stream": true,
+      "requests": 12,
+      "client_concurrency": 3,
+      "statuses": {
+        "200": 12
+      },
+      "elapsed_seconds": 0.859,
+      "successful_requests_per_second": 13.964,
+      "latency_ms": {
+        "mean": 196.688,
+        "p50": 210.474,
+        "p95": 236.409,
+        "p99": 236.409
+      },
+      "ttft_ms_p95": 139.124,
+      "backend_reported_output_tokens": 270,
+      "note": "Synthetic tokens are fixtures, not model throughput. Real counts are reported by the configured backend."
+    }
+  ],
+  "metrics_after_matrix": {
+    "limits": {
+      "concurrency": 3,
+      "queue": 24
+    },
+    "metrics": {
+      "active": 0,
+      "cancelled": 0,
+      "completed": 49,
+      "completion_tokens": 1081,
+      "failed": 0,
+      "peak_active": 3,
+      "prompt_tokens": 33552,
+      "queued": 0,
+      "records_dropped": 0,
+      "rejected": 0
+    },
+    "service": "LiteInfer"
+  },
+  "first_run_default_configuration": true,
+  "conversion_preserved": {
+    "model_type": "qwen3",
+    "max_position_embeddings": 32768,
+    "rope_parameters": {
+      "rope_theta": 1000000.0,
+      "rope_type": "default"
+    },
+    "hidden_size": 448,
+    "num_hidden_layers": 11,
+    "vocab_size": 16384
+  },
+  "measurement_note": "Sequential protocol runs share a prompt and backend cache; sampled output lengths vary. Timings are validation data, not a protocol speed comparison."
+}

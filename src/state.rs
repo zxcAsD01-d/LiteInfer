@@ -52,6 +52,8 @@ pub struct AppState {
     pub metrics: Arc<Metrics>,
     pub records: mpsc::Sender<RequestRecord>,
     pub upstream_keys: HashMap<String, String>,
+    pub registry: crate::registry::Registry,
+    pub deployment: crate::deployment::Deployment,
 }
 
 impl AppState {
@@ -61,6 +63,8 @@ impl AppState {
         admin_key: Option<String>,
     ) -> Result<Arc<Self>, String> {
         config.validate()?;
+        let registry = crate::registry::Registry::new(&config)?;
+        let deployment = crate::deployment::Deployment::new(config.mlx.clone());
         let store =
             Store::open(std::path::Path::new(&config.database)).map_err(|_| "数据库初始化失败")?;
         let mut keys = store.active_keys().map_err(|_| "读取 Key 失败")?;
@@ -107,6 +111,8 @@ impl AppState {
             metrics,
             records,
             upstream_keys,
+            registry,
+            deployment,
         }))
     }
 

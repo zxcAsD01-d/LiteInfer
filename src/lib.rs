@@ -1,6 +1,8 @@
 pub mod api;
 pub mod config;
+pub mod deployment;
 pub mod error;
+pub mod registry;
 pub mod scheduler;
 pub mod sse;
 pub mod state;

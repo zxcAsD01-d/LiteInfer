@@ -13,6 +13,7 @@ LiteInfer 的服务核心使用 Rust；模型计算由独立推理后端执行�
 - **资源控制**：默认 3 活跃 + 24 等待，FIFO 准入、超时、取消和过载 429；并发与排队容量可自由配置。
 - **流式管线**：共享连接池、UTF-8 安全解析、可配置背压通道（默认 8 块）、大小预算和断连回收。
 - **可选 MLX 优化包**：编译稀疏采样、独立随机种子、租户隔离前缀 KV 缓存、连续批处理、自适应预填充和 Llama 投影融合；附可运行示例与实测报告。
+- **网页模型管理**：HuggingFace、ModelScope、自定义镜像或本地目录，读取原生上下文，安装独立环境、下载、MLX 转换、自检、启动并即时注册 API；支持重启恢复。
 - **工具调用**：转发 OpenAI function tools；转换 Anthropic tool_use / tool_result 和 JSON 参数增量。
 - **真实统计**：使用后端返回的 token 用量；不以字符数估算，不伪造缺失用量。
 - **中文控制台**：创建/撤销 Key，查看运行指标、最近请求和 token 用量。
@@ -20,16 +21,17 @@ LiteInfer 的服务核心使用 Rust；模型计算由独立推理后端执行�
 
 ## 快速开始
 
-准备 Rust 1.85+ 和一个已启动的 OpenAI 兼容后端。Apple Silicon 推荐使用支持 Metal 的 MLX 或 llama.cpp 后端；Intel Mac 可连接适配其硬件的后端。
+准备 Rust 1.85+，可从网页控制台安装模型，也可连接已有 OpenAI 兼容后端。Apple Silicon 推荐使用支持 Metal 的 MLX 或 llama.cpp 后端；Intel Mac 可连接适配其硬件的后端。
 
 ```sh
 git clone https://github.com/zxcAsD01-d/LiteInfer.git
 cd LiteInfer
 cargo build --release --locked
-cp examples/config.toml config.toml
 ```
 
-编辑 `config.toml` 的 `models`：将 `upstream_model`、`base_url` 改为后端实际值，然后创建访问密钥：
+也可以直接运行 `./target/release/liteinfer serve`：缺少配置时自动生成，终端显示当前进程管理密钥。打开控制台即可[完成模型安装与自动配置](docs/model-management.md)，无需手动填写后端配置。
+
+连接已有后端时，先复制 `examples/config.toml` 为 `config.toml`，编辑其中的 `models`：将 `upstream_model`、`base_url` 改为后端实际值，然后创建访问密钥：
 
 ```sh
 ./target/release/liteinfer check
@@ -117,6 +119,7 @@ with client.messages.stream(model="local-model", max_tokens=128,
 ## 文档与验证
 
 - [文档导航](docs/README.md)：配置、后端、部署、架构、协议与迁移。
+- [网页模型管理](docs/model-management.md)：纯前端配置校验、下载源、MLX 转换、自检、启动与恢复。
 - [压测方法与结果](docs/testing.md)：区分模拟服务开销和真实模型推理；不把模拟 token 当成模型吞吐。
 - [安全与隐私](SECURITY.md)：公开内容、密钥、日志与部署边界。
 - [贡献指南](CONTRIBUTING.md)：检查命令和代码原则。

@@ -3,7 +3,26 @@
 <header><div><h1>LiteInfer</h1><p>本地模型，一个轻量入口。</p></div><span class="badge">Rust / OpenAI / Anthropic</span></header>
 <section class="panel"><h2>连接管理服务</h2><p>管理密钥只保存在当前页面内存中。请求内容和 API 密钥不会写入请求日志。</p><div class="row"><input id="admin" type="password" placeholder="LITEINFER_ADMIN_KEY" autocomplete="off"><button id="refresh">连接 / 刷新</button></div><p id="status" role="status"></p></section>
 <section class="panel"><h2>运行概况</h2><div class="metrics" id="metrics"><small>连接后显示运行数据</small></div></section>
+<section class="panel"><h2>模型安装与自动配置</h2><p>在网页完成下载、MLX 转换、自检、启动与 API 注册。仅支持 Apple Silicon；转换在这台 Mac 上执行。</p>
+<div class="row"><button id="model-runtime">检查环境 / 刷新模型</button><button id="model-setup">安装独立 MLX 环境</button></div>
+<div class="model-grid">
+<label>下载源<select id="model-source"><option value="huggingface">HuggingFace</option><option value="modelscope">ModelScope</option><option value="local">本地目录</option></select></label>
+<label>仓库 ID / 本地目录<input id="model-repository" placeholder="owner/model-name"></label>
+<label>自定义镜像根地址（可选）<input id="model-endpoint" placeholder="https://your-hub.example"></label>
+<label>revision（可选）<input id="model-revision" placeholder="分支、标签或 commit"></label>
+<label>令牌环境变量名（可选）<input id="model-token_env" placeholder="HF_TOKEN，不填写实际令牌"></label>
+<label>API 模型别名<input id="model-alias" value="local-model"></label>
+<label>精度<select id="model-precision"><option value="q4">q4</option><option value="q8">q8</option><option value="float16">float16</option><option value="keep">保留现有精度</option></select></label>
+<label>量化分组<select id="model-group_size"><option>64</option><option>32</option><option>128</option></select></label>
+</div>
+<div class="row"><button id="model-preview">预览配置</button><button id="model-inspect">校验模型配置</button><button id="model-prepare">下载、转换并自检</button></div>
+<label class="file-label">或选择本地 config.json，仅在浏览器内检查：<input id="model-file" type="file" accept=".json,application/json"></label>
+<pre id="model-info"></pre><p id="model-status" role="status"></p><div id="model-jobs" aria-live="polite"></div>
+<div class="model-grid"><label>已验证产物<select id="model-artifact"><option value="">请选择转换产物</option></select></label><label>本地后端端口<input id="model-port" type="number" min="1" max="65535" value="8081"></label><label>单次输出预算<input id="model-output" type="number" min="1" value="1024"></label></div>
+<div class="row"><button id="model-launch">启动并应用</button><button id="model-stop">停止受管模型</button></div>
+<p id="model-managed"></p><pre id="model-live"></pre>
+</section>
 <section class="panel"><h2>API Key</h2><div class="row"><input id="name" placeholder="新 Key 名称" maxlength="128"><button id="create">创建 Key</button></div><p id="secret"></p><div class="scroll"><table><thead><tr><th>名称</th><th>ID</th><th>状态</th><th>操作</th></tr></thead><tbody id="keys"></tbody></table></div></section>
 <section class="panel"><h2>最近请求</h2><small>仅记录模型、状态、耗时和后端返回的 token 用量。</small><div class="scroll"><table><thead><tr><th>模型</th><th>协议</th><th>状态</th><th>输入</th><th>输出</th><th>耗时</th></tr></thead><tbody id="requests"></tbody></table></div></section>
 <footer><p>OpenAI Base URL：<code>/v1</code> · Anthropic：<code>/v1/messages</code><br>推理速度与模型能力取决于配置的本地后端。</p></footer>
-<script src="/assets/console.js" defer></script></body></html>
+<script src="/assets/console.js" defer></script><script src="/assets/model-config.js" defer></script><script src="/assets/models.js" defer></script></body></html>

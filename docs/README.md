@@ -14,3 +14,4 @@
 文档与代码一同版本管理。兼容矩阵描述当前版本；未实现的功能不会标记为支持。
 
 - [MLX 推理优化与接入](mlx-optimization.md)：可选优化包、连续批处理、缓存、稀疏采样和适用范围。
+- [网页模型管理与自动配置](model-management.md)：HuggingFace / ModelScope 镜像、安装运行环境、MLX 转换、模型校验和运行时应用。

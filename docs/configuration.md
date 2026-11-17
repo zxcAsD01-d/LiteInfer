@@ -38,6 +38,8 @@ vision = false
 
 `tools` 与 `vision` 必须按模型及后端的真实能力设置。模型别名不会增加实际能力；响应模型名称恢复为公开 ID。当前 `/v1/models` 使用 OpenAI 格式。
 
+可选 `context_length` 记录后端的原生上下文并在模型列表展示；网页转换流程自动从模型配置读取。允许空 `models`，用于首次启动后从网页安装。受管 MLX 与动态注册见 [网页模型管理](model-management.md)。
+
 ## 后端示例
 
 | 后端 | 通常的 Base URL | 备注 |

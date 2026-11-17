@@ -72,6 +72,7 @@ impl Harness {
                 tools: true,
                 vision: false,
                 cache_isolation_parameter: None,
+                context_length: None,
             }],
             ..Config::default()
         };
@@ -559,6 +560,127 @@ async fn metadata_is_persisted_without_request_content_and_assets_use_strict_csp
                 .to_str()
                 .unwrap()
                 .contains("unsafe-inline")
+        );
+    }
+}
+
+#[tokio::test]
+async fn dynamic_model_registration_is_authenticated_validated_and_applied() {
+    let app = Harness::new().await;
+    let mut model = app.state.config.models[0].clone();
+    model.id = "second-model".into();
+    model.context_length = Some(32768);
+    let url = format!("{}/admin/models", app.url);
+    assert_eq!(
+        app.client
+            .post(&url)
+            .json(&model)
+            .send()
+            .await
+            .unwrap()
+            .status(),
+        401
+    );
+    let response = app
+        .client
+        .post(&url)
+        .header("x-admin-key", ADMIN)
+        .json(&model)
+        .send()
+        .await
+        .unwrap();
+    assert_eq!(response.status(), 200);
+    let mut request = body("hello", false);
+    request["model"] = json!(model.id);
+    let result: Value = app
+        .post("/v1/chat/completions", request)
+        .send()
+        .await
+        .unwrap()
+        .json()
+        .await
+        .unwrap();
+    assert_eq!(result["model"], model.id);
+    let restored = liteinfer::registry::Registry::new(&app.state.config).unwrap();
+    assert_eq!(restored.get(&model.id).unwrap().context_length, Some(32768));
+    assert_eq!(
+        app.client
+            .post(&url)
+            .header("x-admin-key", ADMIN)
+            .json(&model)
+            .send()
+            .await
+            .unwrap()
+            .status(),
+        400
+    );
+    let status: Value = app
+        .client
+        .get(&url)
+        .header("x-admin-key", ADMIN)
+        .send()
+        .await
+        .unwrap()
+        .json()
+        .await
+        .unwrap();
+    assert_eq!(status["models"].as_array().unwrap().len(), 2);
+}
+
+#[tokio::test]
+async fn model_tasks_reject_unauthorized_and_invalid_inputs_before_spawning() {
+    let app = Harness::new().await;
+    let source =
+        json!({"source":"huggingface","repository":"../escape","alias":"test","precision":"q4"});
+    let url = format!("{}/admin/mlx/prepare", app.url);
+    assert_eq!(
+        app.client
+            .post(&url)
+            .json(&source)
+            .send()
+            .await
+            .unwrap()
+            .status(),
+        401
+    );
+    assert_eq!(
+        app.client
+            .post(&url)
+            .header("x-admin-key", ADMIN)
+            .json(&source)
+            .send()
+            .await
+            .unwrap()
+            .status(),
+        400
+    );
+    let mut empty = app.state.config.clone();
+    empty.models.clear();
+    empty.validate().unwrap();
+    for invalid in [
+        json!({"source":"huggingface","repository":".owner/model"}),
+        json!({"source":"huggingface","repository":"owner/model","token_env":"1TOKEN"}),
+        json!({"source":"huggingface","repository":"owner/model","revision":"bad\nrevision"}),
+    ] {
+        let response = app
+            .client
+            .post(&url)
+            .header("x-admin-key", ADMIN)
+            .json(&invalid)
+            .send()
+            .await
+            .unwrap();
+        assert_eq!(response.status(), 400);
+    }
+    for asset in ["/assets/models.js", "/assets/model-config.js"] {
+        assert_eq!(
+            app.client
+                .get(format!("{}{asset}", app.url))
+                .send()
+                .await
+                .unwrap()
+                .status(),
+            200
         );
     }
 }

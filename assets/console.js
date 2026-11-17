@@ -4,10 +4,11 @@ let refreshing = false;
 let connected = false;
 
 async function api(path, options = {}) {
+  const { timeout = 10000, ...requestOptions } = options;
   const response = await fetch(path, {
-    ...options,
+    ...requestOptions,
     headers: { "x-admin-key": element("admin").value, "Content-Type": "application/json" },
-    signal: AbortSignal.timeout(10000),
+    signal: AbortSignal.timeout(timeout),
   });
   const result = await response.json();
   if (!response.ok) throw new Error(result.error?.message || "请求失败");

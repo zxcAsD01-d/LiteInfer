@@ -9,6 +9,8 @@ cargo fmt --all -- --check
 cargo clippy --all-targets --locked -- -D warnings
 cargo test --all-targets --locked
 cargo build --release --locked
+node tests/frontend/model-config.cjs
+python3 -m unittest discover -s plugins/mlx/tests -v
 python3 scripts/privacy_check.py
 ```
 
@@ -52,6 +54,12 @@ LITEINFER_HTTP_REPORT=benchmarks/concurrency-http.json \
 ```
 
 MLX 的组件测试与实测脚本见 [推理优化文档](mlx-optimization.md)。Rust 网关不需要安装 MLX，MLX 测试需单独在 Apple Silicon 上运行。
+
+## 模型管理验证（2026-11-17）
+
+`benchmarks/model-management-verification.json` 记录 feng-30m 的真实验证：HuggingFace 配置检查、ModelScope 网页下载、独立环境安装、q4 转换、前向自检、API 别名 `gpt-6.5astra`、32K 输入和双协议请求。浏览器本地 JSON 校验与配置预览单独检查不发起网络请求。
+
+插件测试需在已安装模型管理依赖的 Python 环境执行；Rust 和浏览器配置校验不依赖 MLX。32K 测试验证完整输入被处理及 usage 一致，不评价长文本记忆质量；缓存命中会显著改变预填充耗时，报告区分冷启动和缓存结果。
 
 ## 既有服务结果
 

@@ -2,7 +2,7 @@
 
 **为 macOS 本地模型提供轻量、可观测的 Rust API 服务。**
 
-一个入口连接 MLX、llama.cpp 等 OpenAI 兼容推理后端，向客户端提供 OpenAI 和 Anthropic Messages 格式。默认仅监听本机，3 路并发，带有有界队列、流式背压、API Key 管理和中文控制台。
+一个入口连接 MLX、llama.cpp 等 OpenAI 兼容推理后端，向客户端提供 OpenAI 和 Anthropic Messages 格式。默认仅监听本机，默认 3 路、支持配置任意正整数 N 并发，带有有界队列、流式背压、API Key 管理和中文控制台。
 
 LiteInfer 的服务核心使用 Rust；模型计算由独立推理后端执行。它不是新的模型训练框架，也不把协议兼容等同于模型拥有相应能力。
 
@@ -10,8 +10,9 @@ LiteInfer 的服务核心使用 Rust；模型计算由独立推理后端执行�
 
 - **双协议**：OpenAI Chat Completions / Completions，Anthropic Messages；JSON 和 SSE。
 - **通用模型注册**：公开别名映射实际模型和后端，不硬编码模型架构。
-- **资源控制**：默认 3 活跃 + 24 等待，FIFO 准入、超时、取消和过载 429。
-- **流式管线**：共享连接池、UTF-8 安全解析、8 块背压通道、大小预算和断连回收。
+- **资源控制**：默认 3 活跃 + 24 等待，FIFO 准入、超时、取消和过载 429；并发与排队容量可自由配置。
+- **流式管线**：共享连接池、UTF-8 安全解析、可配置背压通道（默认 8 块）、大小预算和断连回收。
+- **可选 MLX 优化包**：编译稀疏采样、独立随机种子、租户隔离前缀 KV 缓存、连续批处理、自适应预填充和 Llama 投影融合；附可运行示例与实测报告。
 - **工具调用**：转发 OpenAI function tools；转换 Anthropic tool_use / tool_result 和 JSON 参数增量。
 - **真实统计**：使用后端返回的 token 用量；不以字符数估算，不伪造缺失用量。
 - **中文控制台**：创建/撤销 Key，查看运行指标、最近请求和 token 用量。
@@ -44,6 +45,20 @@ export LITEINFER_ADMIN_KEY="$(openssl rand -hex 32)"
 ```
 
 打开 `http://127.0.0.1:8787/`，输入管理密钥即可管理 Key 和请求。API Key 与管理密钥分开。也可以设置 `LITEINFER_API_KEY`（至少24字符）作为环境Key，省略创建步骤。
+
+## 自定义 N 并发与推理优化
+
+```toml
+concurrency = 16         # 任意正整数 N，默认 3
+queue_capacity = 128     # 0 表示不排队；支持超过 4096
+stream_buffer_chunks = 8
+metadata_queue_capacity = 8192
+# ingress_capacity = 256 # 可选：鉴权/请求体阶段容量，省略时自动计算
+```
+
+移除原来的 128 并发和 4096 排队上限；只保留整数溢出、运行时容量和正数校验。配置大 N 不会预分配 N 份模型权重，但实际请求仍消耗内存、文件描述符和后端槽位。网关和后端的并发应配套调整。
+
+[MLX 推理优化与接入](docs/mlx-optimization.md)包含可安装源码、批处理 CLI、Python 接入示例、适用架构和基准脚本。Rust 网关保持独立，安装该包不会自动改动已运行的后端。
 
 ## 请求示例
 

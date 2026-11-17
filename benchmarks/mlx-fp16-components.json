@@ -1,0 +1,120 @@
+{
+  "label": "real-weight-mlx-components",
+  "model": "TaiChu-80M-SFT",
+  "dtype": "float16",
+  "quantize_bits": null,
+  "fused_llama": false,
+  "sampling": {
+    "temperature": 0.7,
+    "top_k": 64,
+    "top_p": 0.9,
+    "seed": 0
+  },
+  "mlx": "0.32.4",
+  "mlx_lm": "0.32.2",
+  "cases": [
+    {
+      "concurrency": 1,
+      "requests": 12,
+      "completed": 12,
+      "seconds": 1.694944792019669,
+      "completion_tokens": 384,
+      "tokens_per_second": 226.5560517416215,
+      "cached_input_tokens": 1536,
+      "ttft_including_queue_ms_p95": 1433.2164590014145,
+      "peak_active": 1,
+      "peak_gpu_bytes": 190610592,
+      "warm_cache": {
+        "entries": 1,
+        "bytes": 1310720,
+        "max_bytes": 268435456,
+        "max_entries": 64,
+        "hits": 0,
+        "misses": 1,
+        "saved_tokens": 0,
+        "input_tokens": 128,
+        "token_hit_rate": 0.0
+      },
+      "final_cache": {
+        "entries": 13,
+        "bytes": 17137664,
+        "max_bytes": 268435456,
+        "max_entries": 64,
+        "hits": 12,
+        "misses": 1,
+        "saved_tokens": 1536,
+        "input_tokens": 1676,
+        "token_hit_rate": 0.9164677804295943
+      }
+    },
+    {
+      "concurrency": 3,
+      "requests": 12,
+      "completed": 12,
+      "seconds": 0.9780960829812102,
+      "completion_tokens": 384,
+      "tokens_per_second": 392.5994661276819,
+      "cached_input_tokens": 1536,
+      "ttft_including_queue_ms_p95": 758.0599169596098,
+      "peak_active": 3,
+      "peak_gpu_bytes": 203835966,
+      "warm_cache": {
+        "entries": 1,
+        "bytes": 1310720,
+        "max_bytes": 268435456,
+        "max_entries": 64,
+        "hits": 0,
+        "misses": 1,
+        "saved_tokens": 0,
+        "input_tokens": 128,
+        "token_hit_rate": 0.0
+      },
+      "final_cache": {
+        "entries": 13,
+        "bytes": 17137664,
+        "max_bytes": 268435456,
+        "max_entries": 64,
+        "hits": 12,
+        "misses": 1,
+        "saved_tokens": 1536,
+        "input_tokens": 1676,
+        "token_hit_rate": 0.9164677804295943
+      }
+    },
+    {
+      "concurrency": 8,
+      "requests": 12,
+      "completed": 12,
+      "seconds": 0.5668481250177138,
+      "completion_tokens": 384,
+      "tokens_per_second": 677.4301317270833,
+      "cached_input_tokens": 1536,
+      "ttft_including_queue_ms_p95": 341.8531670467928,
+      "peak_active": 8,
+      "peak_gpu_bytes": 217236556,
+      "warm_cache": {
+        "entries": 1,
+        "bytes": 1310720,
+        "max_bytes": 268435456,
+        "max_entries": 64,
+        "hits": 0,
+        "misses": 1,
+        "saved_tokens": 0,
+        "input_tokens": 128,
+        "token_hit_rate": 0.0
+      },
+      "final_cache": {
+        "entries": 13,
+        "bytes": 17137664,
+        "max_bytes": 268435456,
+        "max_entries": 64,
+        "hits": 12,
+        "misses": 1,
+        "saved_tokens": 1536,
+        "input_tokens": 1676,
+        "token_hit_rate": 0.9164677804295943
+      }
+    }
+  ],
+  "note": "Warm prefix reuse, fixed output length, direct BatchEngine; excludes HTTP/tokenization/loading. No EOS stop configured; not a quality evaluation."
+}

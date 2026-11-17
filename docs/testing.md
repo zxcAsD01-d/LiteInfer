@@ -19,7 +19,7 @@ python3 scripts/privacy_check.py
 - SSE 的 UTF-8 分块、CRLF、超限和异常结束；
 - OpenAI JSON/SSE、Completions、工具调用和真实 usage；
 - Anthropic JSON/SSE、文本块、工具参数增量、tool_result、错误和官方 SDK 版本头；
-- 取消回收、队列满、3 活跃并发峰值、元数据脱敏和控制台 CSP。
+- 取消回收、队列满、1/2/3/8/32/256/1024 活跃并发峰值、元数据脱敏和控制台 CSP。
 
 ## 可复现压测
 
@@ -36,7 +36,24 @@ LITEINFER_API_KEY='本地测试Key' python3 scripts/benchmark.py \
 
 脚本支持 `openai` / `anthropic` 和 JSON / SSE。`--label synthetic` 只测 HTTP、队列、协议转换与元数据开销。将 `--label` 设为 `real-model` 时，必须说明实际后端与模型；不要把合成报告与模型 token/s 混合。
 
-## 本轮结果
+## 可配置 N 验证（2026-11-17）
+
+- `benchmarks/concurrency-scheduler.json`：N=1/2/3/8/32/256/1024，每组 4N 个调度任务，共 5304 个；通过屏障确实达到每组 N 活跃槽位，结束后许可全部回收。此报告不测 HTTP 或模型 token/s。
+- `benchmarks/concurrency-http.json`：N=1/8/32/256，混合 OpenAI JSON/SSE 共 594 次请求，全部成功，活跃峰值分别为 1/8/32/256，无失败、拒绝或元数据丢弃。建连每 8 请求间隔 1ms，避免把本机 TCP backlog 的突发上限当成请求调度上限。
+- `benchmarks/mlx-q4-components.json`、`mlx-q4-fused-components.json`、`mlx-fp16-components.json`：80M 真实权重直接调用可选 MLX BatchEngine，N=1/3/8，每个 N 完成 12 请求。使用预热缓存、固定输出长度、不启用 EOS；与下方 HTTP 推理报告的测试方法不同。融合并未稳定加速，因此默认关闭。
+
+重建调度与 HTTP 报告：
+
+```sh
+LITEINFER_SCHEDULER_REPORT=benchmarks/concurrency-scheduler.json \
+  cargo test --locked --test scheduler
+LITEINFER_HTTP_REPORT=benchmarks/concurrency-http.json \
+  cargo test --locked --test http http_pipeline_supports_configurable_n
+```
+
+MLX 的组件测试与实测脚本见 [推理优化文档](mlx-optimization.md)。Rust 网关不需要安装 MLX，MLX 测试需单独在 Apple Silicon 上运行。
+
+## 既有服务结果
 
 - `benchmarks/synthetic-matrix.json`：14,000 次合成请求，OpenAI/Anthropic JSON/SSE，客户端并发 3、10、64、256；3 活跃请求峰值，过载按预算返回 429，无 5xx，元数据无丢弃。
 - `benchmarks/real-model-matrix.json`：TaiChu-80M-SFT q4 和 AL-0-SFT q4 各 60 次请求，双协议、JSON/SSE，10 客户端并发全部成功；只验证服务与传输，不评价模型回答质量。

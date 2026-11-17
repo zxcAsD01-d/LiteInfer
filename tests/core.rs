@@ -39,6 +39,35 @@ fn configuration_rejects_unsafe_or_ambiguous_values() {
 }
 
 #[test]
+fn capacities_accept_large_n_and_reject_overflow_without_panicking() {
+    let mut config: Config = toml::from_str(include_str!("../examples/config.toml")).unwrap();
+    config.concurrency = 1024;
+    config.queue_capacity = 10000;
+    config.validate().unwrap();
+    assert_eq!(config.admission_capacity().unwrap(), 11024);
+    assert_eq!(config.ingress_limit().unwrap(), 11040);
+    config.queue_capacity = 0;
+    config.ingress_capacity = Some(4096);
+    config.validate().unwrap();
+    assert_eq!(config.ingress_limit().unwrap(), 4096);
+    for (active, queue) in [(usize::MAX, 1), (1, tokio::sync::Semaphore::MAX_PERMITS)] {
+        config.concurrency = active;
+        config.queue_capacity = queue;
+        assert!(config.validate().is_err());
+    }
+    config.concurrency = 1;
+    config.queue_capacity = 0;
+    config.ingress_capacity = Some(0);
+    assert!(config.validate().is_err());
+    config.ingress_capacity = None;
+    config.stream_buffer_chunks = 0;
+    assert!(config.validate().is_err());
+    config.stream_buffer_chunks = 1;
+    config.metadata_queue_capacity = usize::MAX;
+    assert!(config.validate().is_err());
+}
+
+#[test]
 fn keys_are_hashed_revocable_and_not_retrievable() {
     let dir = tempfile::tempdir().unwrap();
     let path = dir.path().join("state.sqlite3");

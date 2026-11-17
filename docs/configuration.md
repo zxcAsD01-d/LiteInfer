@@ -5,8 +5,11 @@
 | 参数 | 默认值 | 含义 |
 | --- | --- | --- |
 | listen | 127.0.0.1:8787 | API 与控制台地址 |
-| concurrency | 3 | 1–128，所有模型共享活跃上限 |
-| queue_capacity | 24 | 0–4096，等待请求数 |
+| concurrency | 3 | 任意正整数 N，所有模型共享活跃上限 |
+| queue_capacity | 24 | 任意非负整数，等待请求数；0 表示不排队 |
+| ingress_capacity | 自动 | 默认 max(64, N + queue_capacity + 16)，限制鉴权/请求体阶段；可显式配置正整数 |
+| stream_buffer_chunks | 8 | 每条流的背压缓冲块数，正整数 |
+| metadata_queue_capacity | 4096 | 异步请求记录队列容量，正整数 |
 | queue_timeout_seconds | 60 | 等待活跃槽位的时间 |
 | request_timeout_seconds | 180 | 获得槽位后的后端总预算 |
 | max_body_bytes | 8388608 | 请求体上限，超出返回 413 |
@@ -57,3 +60,9 @@ python -m mlx_lm server --model ./models/mlx-model --host 127.0.0.1 --port 8081 
 ```
 
 部分 MLX-LM 版本的 KV 量化会禁用批处理，应先测量再启用。不要把 KV 量化和高并发默认为同时加速。模型权重、模型卡与许可证不随 LiteInfer 分发。
+
+## N 并发调优
+
+并发和排队无固定产品上限，校验 `N + queue_capacity` 的整数溢出与 Tokio `Semaphore::MAX_PERMITS`。这是运行时可表示的容量，并非机器可承载的请求数。默认入口容量在运行时最大值处饱和，不会溢出；显式入口容量可以比调度容量低，以便较早限流。
+
+先让后端 batch / parallel 与 N 对齐，再逐步增加 N 并测量总 token/s、首 token 延迟和 KV 内存。增加队列只增加等待容量；增加 SSE 缓冲会增加慢客户端占用。TCP 建连突发还受操作系统 listen backlog 和文件描述符预算影响，与请求调度的 N 是两个维度。可选 MLX 优化及直接调用方式见 [推理优化](mlx-optimization.md)。

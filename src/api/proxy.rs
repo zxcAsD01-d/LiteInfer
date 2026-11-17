@@ -229,7 +229,11 @@ pub async fn execute(
             anthropic,
             include_usage,
         );
-        let mut response = Response::new(Body::from_stream(buffered_stream(stream, deadline)));
+        let mut response = Response::new(Body::from_stream(buffered_stream(
+            stream,
+            deadline,
+            state.config.stream_buffer_chunks,
+        )));
         response.headers_mut().insert(
             "content-type",
             HeaderValue::from_static("text/event-stream"),
@@ -416,8 +420,9 @@ fn upstream_events(
 fn buffered_stream(
     stream: impl Stream<Item = Result<Bytes, Infallible>> + Send + 'static,
     deadline: Instant,
+    capacity: usize,
 ) -> impl Stream<Item = Result<Bytes, Infallible>> + Send + 'static {
-    let (sender, receiver) = tokio::sync::mpsc::channel(8);
+    let (sender, receiver) = tokio::sync::mpsc::channel(capacity);
     tokio::spawn(async move {
         futures_util::pin_mut!(stream);
         loop {

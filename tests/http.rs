@@ -47,6 +47,9 @@ async fn start(router: Router) -> (String, tokio::task::JoinHandle<()>) {
 
 impl Harness {
     async fn new() -> Self {
+        Self::with_capacity(3, 2).await
+    }
+    async fn with_capacity(concurrency: usize, queue_capacity: usize) -> Self {
         let folder = tempfile::tempdir().unwrap();
         let (backend, task) = start(
             Router::new()
@@ -56,7 +59,8 @@ impl Harness {
         .await;
         let config = Config {
             database: folder.path().join("state.sqlite3").to_str().unwrap().into(),
-            queue_capacity: 2,
+            concurrency,
+            queue_capacity,
             request_timeout_seconds: 2,
             max_body_bytes: 4096,
             models: vec![Model {
@@ -97,6 +101,46 @@ impl Harness {
             tokio::time::sleep(Duration::from_millis(10)).await;
         }
         panic!("scheduler did not release slots");
+    }
+}
+
+#[tokio::test(flavor = "multi_thread", worker_threads = 4)]
+async fn http_pipeline_supports_configurable_n() {
+    let mut rows = Vec::new();
+    for n in [1, 8, 32, 256] {
+        let app = Harness::with_capacity(n, n).await;
+        let started = std::time::Instant::now();
+        let mut tasks = Vec::new();
+        for i in 0..2 * n {
+            let request = app.post("/v1/chat/completions", body("slow", i % 2 == 0));
+            tasks.push(tokio::spawn(async move {
+                let response = request.send().await.unwrap();
+                assert_eq!(response.status(), 200);
+                assert!(!response.text().await.unwrap().is_empty());
+            }));
+            // Pace connection establishment below the OS listen backlog; all
+            // requests remain in flight while the mock performs its delay.
+            if i % 8 == 7 {
+                tokio::time::sleep(Duration::from_millis(1)).await;
+            }
+        }
+        for task in tasks {
+            task.await.unwrap();
+        }
+        app.idle().await;
+        assert!(app.state.metrics.peak_active.load(Ordering::Relaxed) <= n);
+        assert_eq!(
+            app.state.metrics.completed.load(Ordering::Relaxed),
+            (2 * n) as u64
+        );
+        assert_eq!(app.state.metrics.failed.load(Ordering::Relaxed), 0);
+        rows.push(json!({"concurrency":n,"client_requests":2*n,"queue_capacity":n,
+            "elapsed_ms":started.elapsed().as_secs_f64()*1000.0,"metrics":app.state.metrics.snapshot()}));
+    }
+    if let Ok(path) = std::env::var("LITEINFER_HTTP_REPORT") {
+        std::fs::write(path, serde_json::to_string_pretty(&json!({"label":"synthetic-http",
+            "note":"OpenAI JSON/SSE mixed; mock delay 200ms. Connection launches paced 1ms per 8 requests to respect OS backlog. No model inference.",
+            "cases":rows})).unwrap()+"\n").unwrap();
     }
 }
 

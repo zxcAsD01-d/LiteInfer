@@ -1,7 +1,12 @@
 # 复制为 config.toml，根据本机实际后端修改。
 listen = "127.0.0.1:8787"
+# 任意正整数 N；实际容量取决于内存与模型后端。
 concurrency = 3
 queue_capacity = 24
+# 可选：鉴权/请求体阶段入口容量；省略时自动计算。
+# ingress_capacity = 64
+stream_buffer_chunks = 8
+metadata_queue_capacity = 4096
 queue_timeout_seconds = 60
 request_timeout_seconds = 180
 max_body_bytes = 8388608

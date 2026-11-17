@@ -7,6 +7,9 @@ pub struct Config {
     pub listen: SocketAddr,
     pub concurrency: usize,
     pub queue_capacity: usize,
+    pub ingress_capacity: Option<usize>,
+    pub stream_buffer_chunks: usize,
+    pub metadata_queue_capacity: usize,
     pub queue_timeout_seconds: u64,
     pub request_timeout_seconds: u64,
     pub max_body_bytes: usize,
@@ -44,6 +47,9 @@ impl Default for Config {
             listen: "127.0.0.1:8787".parse().expect("constant address"),
             concurrency: 3,
             queue_capacity: 24,
+            ingress_capacity: None,
+            stream_buffer_chunks: 8,
+            metadata_queue_capacity: 4096,
             queue_timeout_seconds: 60,
             request_timeout_seconds: 180,
             max_body_bytes: 8 * 1024 * 1024,
@@ -67,9 +73,7 @@ impl Config {
         if !self.listen.ip().is_loopback() && !self.allow_remote {
             return Err("非本机监听需要显式设置 allow_remote=true".into());
         }
-        if !(1..=128).contains(&self.concurrency) || self.queue_capacity > 4096 {
-            return Err("concurrency 必须为 1..128，queue_capacity 不超过 4096".into());
-        }
+        self.validate_capacities()?;
         if self.queue_timeout_seconds == 0
             || self.request_timeout_seconds == 0
             || self.max_body_bytes == 0
@@ -85,6 +89,36 @@ impl Config {
             model.validate()?;
             if !ids.insert(&model.id) {
                 return Err("模型 id 重复".into());
+            }
+        }
+        Ok(())
+    }
+
+    pub fn admission_capacity(&self) -> Result<usize, String> {
+        self.concurrency
+            .checked_add(self.queue_capacity)
+            .filter(|n| *n <= tokio::sync::Semaphore::MAX_PERMITS)
+            .ok_or_else(|| "concurrency + queue_capacity 超出运行时容量".into())
+    }
+
+    pub fn ingress_limit(&self) -> Result<usize, String> {
+        Ok(self.ingress_capacity.unwrap_or(
+            self.admission_capacity()?
+                .saturating_add(16)
+                .clamp(64, tokio::sync::Semaphore::MAX_PERMITS),
+        ))
+    }
+
+    fn validate_capacities(&self) -> Result<(), String> {
+        self.admission_capacity()?;
+        for (name, value) in [
+            ("concurrency", self.concurrency),
+            ("ingress_capacity", self.ingress_limit()?),
+            ("stream_buffer_chunks", self.stream_buffer_chunks),
+            ("metadata_queue_capacity", self.metadata_queue_capacity),
+        ] {
+            if value == 0 || value > tokio::sync::Semaphore::MAX_PERMITS {
+                return Err(format!("{name} 必须为正整数，且不超过运行时容量"));
             }
         }
         Ok(())

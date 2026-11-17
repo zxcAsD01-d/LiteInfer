@@ -90,13 +90,15 @@ impl AppState {
             }
         }
         let metrics = Arc::new(Metrics::default());
-        let records = record_writer(store.clone(), metrics.clone())?;
+        let records = record_writer(
+            store.clone(),
+            metrics.clone(),
+            config.metadata_queue_capacity,
+        )?;
         Ok(Arc::new(Self {
             slots: Arc::new(Semaphore::new(config.concurrency)),
-            admission: Arc::new(Semaphore::new(config.concurrency + config.queue_capacity)),
-            ingress: Arc::new(Semaphore::new(
-                (config.concurrency + config.queue_capacity + 16).max(64),
-            )),
+            admission: Arc::new(Semaphore::new(config.admission_capacity()?)),
+            ingress: Arc::new(Semaphore::new(config.ingress_limit()?)),
             config,
             client,
             store,
@@ -146,8 +148,9 @@ impl AppState {
 fn record_writer(
     store: Store,
     metrics: Arc<Metrics>,
+    capacity: usize,
 ) -> Result<mpsc::Sender<RequestRecord>, String> {
-    let (sender, mut receiver) = mpsc::channel::<RequestRecord>(4096);
+    let (sender, mut receiver) = mpsc::channel::<RequestRecord>(capacity);
     let mut db = store
         .writer_connection()
         .map_err(|_| "元数据连接初始化失败")?;

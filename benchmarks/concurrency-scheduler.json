@@ -1,0 +1,132 @@
+{
+  "cases": [
+    {
+      "concurrency": 1,
+      "elapsed_ms": 1.2526659999999998,
+      "metrics": {
+        "active": 0,
+        "cancelled": 0,
+        "completed": 4,
+        "completion_tokens": 0,
+        "failed": 0,
+        "peak_active": 1,
+        "prompt_tokens": 0,
+        "queued": 0,
+        "records_dropped": 0,
+        "rejected": 0
+      },
+      "peak_active": 1,
+      "requests": 4
+    },
+    {
+      "concurrency": 2,
+      "elapsed_ms": 0.276708,
+      "metrics": {
+        "active": 0,
+        "cancelled": 0,
+        "completed": 8,
+        "completion_tokens": 0,
+        "failed": 0,
+        "peak_active": 2,
+        "prompt_tokens": 0,
+        "queued": 0,
+        "records_dropped": 0,
+        "rejected": 0
+      },
+      "peak_active": 2,
+      "requests": 8
+    },
+    {
+      "concurrency": 3,
+      "elapsed_ms": 0.612167,
+      "metrics": {
+        "active": 0,
+        "cancelled": 0,
+        "completed": 12,
+        "completion_tokens": 0,
+        "failed": 0,
+        "peak_active": 3,
+        "prompt_tokens": 0,
+        "queued": 0,
+        "records_dropped": 0,
+        "rejected": 0
+      },
+      "peak_active": 3,
+      "requests": 12
+    },
+    {
+      "concurrency": 8,
+      "elapsed_ms": 0.390708,
+      "metrics": {
+        "active": 0,
+        "cancelled": 0,
+        "completed": 32,
+        "completion_tokens": 0,
+        "failed": 0,
+        "peak_active": 8,
+        "prompt_tokens": 0,
+        "queued": 0,
+        "records_dropped": 0,
+        "rejected": 0
+      },
+      "peak_active": 8,
+      "requests": 32
+    },
+    {
+      "concurrency": 32,
+      "elapsed_ms": 1.304708,
+      "metrics": {
+        "active": 0,
+        "cancelled": 0,
+        "completed": 128,
+        "completion_tokens": 0,
+        "failed": 0,
+        "peak_active": 32,
+        "prompt_tokens": 0,
+        "queued": 0,
+        "records_dropped": 0,
+        "rejected": 0
+      },
+      "peak_active": 32,
+      "requests": 128
+    },
+    {
+      "concurrency": 256,
+      "elapsed_ms": 4.89725,
+      "metrics": {
+        "active": 0,
+        "cancelled": 0,
+        "completed": 1024,
+        "completion_tokens": 0,
+        "failed": 0,
+        "peak_active": 256,
+        "prompt_tokens": 0,
+        "queued": 0,
+        "records_dropped": 0,
+        "rejected": 0
+      },
+      "peak_active": 256,
+      "requests": 1024
+    },
+    {
+      "concurrency": 1024,
+      "elapsed_ms": 17.645750000000003,
+      "metrics": {
+        "active": 0,
+        "cancelled": 0,
+        "completed": 4096,
+        "completion_tokens": 0,
+        "failed": 0,
+        "peak_active": 1024,
+        "prompt_tokens": 0,
+        "queued": 0,
+        "records_dropped": 0,
+        "rejected": 0
+      },
+      "peak_active": 1024,
+      "requests": 4096
+    }
+  ],
+  "label": "synthetic-scheduler",
+  "note": "Barrier-held leases measure scheduler capacity, not HTTP or model token throughput."
+}

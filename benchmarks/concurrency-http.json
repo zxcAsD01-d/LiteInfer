@@ -1,0 +1,78 @@
+{
+  "cases": [
+    {
+      "client_requests": 2,
+      "concurrency": 1,
+      "elapsed_ms": 411.164,
+      "metrics": {
+        "active": 0,
+        "cancelled": 0,
+        "completed": 2,
+        "completion_tokens": 8,
+        "failed": 0,
+        "peak_active": 1,
+        "prompt_tokens": 26,
+        "queued": 0,
+        "records_dropped": 0,
+        "rejected": 0
+      },
+      "queue_capacity": 1
+    },
+    {
+      "client_requests": 16,
+      "concurrency": 8,
+      "elapsed_ms": 410.327334,
+      "metrics": {
+        "active": 0,
+        "cancelled": 0,
+        "completed": 16,
+        "completion_tokens": 64,
+        "failed": 0,
+        "peak_active": 8,
+        "prompt_tokens": 208,
+        "queued": 0,
+        "records_dropped": 0,
+        "rejected": 0
+      },
+      "queue_capacity": 8
+    },
+    {
+      "client_requests": 64,
+      "concurrency": 32,
+      "elapsed_ms": 414.306875,
+      "metrics": {
+        "active": 0,
+        "cancelled": 0,
+        "completed": 64,
+        "completion_tokens": 256,
+        "failed": 0,
+        "peak_active": 32,
+        "prompt_tokens": 832,
+        "queued": 0,
+        "records_dropped": 0,
+        "rejected": 0
+      },
+      "queue_capacity": 32
+    },
+    {
+      "client_requests": 512,
+      "concurrency": 256,
+      "elapsed_ms": 486.730708,
+      "metrics": {
+        "active": 0,
+        "cancelled": 0,
+        "completed": 512,
+        "completion_tokens": 2048,
+        "failed": 0,
+        "peak_active": 256,
+        "prompt_tokens": 6656,
+        "queued": 0,
+        "records_dropped": 0,
+        "rejected": 0
+      },
+      "queue_capacity": 256
+    }
+  ],
+  "label": "synthetic-http",
+  "note": "OpenAI JSON/SSE mixed; mock delay 200ms. Connection launches paced 1ms per 8 requests to respect OS backlog. No model inference."
+}

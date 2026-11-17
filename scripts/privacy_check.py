@@ -21,7 +21,7 @@ def main():
         if not item:
             continue
         path = Path(item.decode())
-        if (path.parent == Path(".") and path.name in BLOCKED) or path.suffix in (".log", ".sqlite3", ".safetensors", ".gguf", ".pt"):
+        if (path.name in BLOCKED and path != Path("examples/config.toml")) or path.suffix in (".log", ".sqlite3", ".safetensors", ".gguf", ".pt"):
             failures.append((str(path), "private file"))
         if not path.is_file():
             continue

@@ -1,0 +1,17 @@
+[build-system]
+requires = ["setuptools>=77"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "liteinfer-mlx"
+version = "0.1.0"
+description = "Optional MLX inference optimizations for LiteInfer"
+requires-python = ">=3.11"
+license = "MIT"
+dependencies = ["mlx==0.32.4", "mlx-lm==0.32.2"]
+
+[project.scripts]
+liteinfer-mlx-batch = "liteinfer_mlx.cli:main"
+
+[tool.setuptools.packages.find]
+include = ["liteinfer_mlx*"]

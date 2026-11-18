@@ -1,0 +1,169 @@
+{
+  "date": "2026-11-19",
+  "model": "Valen-Decision-1.5-0.8B",
+  "source_revision": "e079395fe9b8e0763b384af403e636e91c1a1559",
+  "hardware": {
+    "chip": "Apple M1 Pro",
+    "unified_memory_gib": 16
+  },
+  "runtime": {
+    "mlx": "0.32.4",
+    "mlx_lm": "0.32.2"
+  },
+  "method": {
+    "prompt_tokens": 128,
+    "generation_tokens": 32,
+    "prompt_source": "fixed English test prompt; token sequence repeated to requested length",
+    "warmup_runs": 2,
+    "timing_trials": 10,
+    "scope": "text-only backbone prefill/decode + Mixer synthetic role-feature microbench; not HTTP or multimodal"
+  },
+  "backbone": {
+    "bf16": {
+      "prefill": {
+        "median_ms": 70.07639549556188,
+        "p95_ms": 75.38676006661261,
+        "input_tokens_per_second": 1826.5779667292757
+      },
+      "decode": {
+        "generated_tokens": 32,
+        "median_ms": 434.91179202101193,
+        "p95_ms": 463.1444586877478,
+        "decode_tokens_per_second": 73.57813834225489
+      }
+    },
+    "q8_reference": {
+      "prefill": {
+        "median_ms": 75.46370849013329,
+        "p95_ms": 81.58305173565168,
+        "input_tokens_per_second": 1696.1795618185888
+      },
+      "decode": {
+        "generated_tokens": 32,
+        "median_ms": 282.891937502427,
+        "p95_ms": 299.6586079825647,
+        "decode_tokens_per_second": 113.11739840491376
+      },
+      "hidden_rmse_vs_bf16": 0.15904547274112701,
+      "hidden_max_abs_error_vs_bf16": 2.265625,
+      "hidden_relative_l2_error_vs_bf16": 0.041576385498046875
+    },
+    "q4_reference": {
+      "prefill": {
+        "median_ms": 82.40035397466272,
+        "p95_ms": 91.28798109595664,
+        "input_tokens_per_second": 1553.391385179713
+      },
+      "decode": {
+        "generated_tokens": 32,
+        "median_ms": 228.5776039934717,
+        "p95_ms": 231.39141249994282,
+        "decode_tokens_per_second": 139.99621765618795
+      },
+      "hidden_rmse_vs_bf16": 1.458649754524231,
+      "hidden_max_abs_error_vs_bf16": 17.71875,
+      "hidden_relative_l2_error_vs_bf16": 0.38130804896354675
+    },
+    "q4_custom_depthwise_conv": {
+      "prefill": {
+        "median_ms": 81.21533296070993,
+        "p95_ms": 86.9602248072624,
+        "input_tokens_per_second": 1576.057073630707
+      },
+      "decode": {
+        "generated_tokens": 32,
+        "median_ms": 229.33316649869084,
+        "p95_ms": 235.61120976519302,
+        "decode_tokens_per_second": 139.53498522937227
+      }
+    },
+    "depthwise_layers_replaced": 18,
+    "custom_conv_max_abs_error": 0.0
+  },
+  "mixer_head": {
+    "4": {
+      "reference": {
+        "median_ms": 0.6380414997693151,
+        "p95_ms": 0.8563253039028493,
+        "candidates_per_second": 6269.184686961908
+      },
+      "metal_layer_norm": {
+        "median_ms": 0.7752705132588744,
+        "p95_ms": 1.2085224094334985,
+        "candidates_per_second": 5159.489406073078
+      },
+      "compiled_reference": {
+        "median_ms": 0.6654169992543757,
+        "p95_ms": 0.7958395726745947,
+        "candidates_per_second": 6011.268128830715
+      },
+      "compiled_metal_layer_norm": {
+        "median_ms": 0.7066664984449744,
+        "p95_ms": 1.224023097893223,
+        "candidates_per_second": 5660.378705941252
+      },
+      "max_abs_error": 2.384185791015625e-07,
+      "compiled_max_abs_error": 0.0
+    },
+    "16": {
+      "reference": {
+        "median_ms": 0.7531454903073609,
+        "p95_ms": 1.356529491022228,
+        "candidates_per_second": 21244.235285097908
+      },
+      "metal_layer_norm": {
+        "median_ms": 0.8416044875048101,
+        "p95_ms": 0.9239479462848976,
+        "candidates_per_second": 19011.305473711076
+      },
+      "compiled_reference": {
+        "median_ms": 0.8500835101585835,
+        "p95_ms": 1.0964850574964653,
+        "candidates_per_second": 18821.680233528106
+      },
+      "compiled_metal_layer_norm": {
+        "median_ms": 0.8391875016968697,
+        "p95_ms": 0.8849837089655921,
+        "candidates_per_second": 19066.060883470473
+      },
+      "max_abs_error": 2.980232238769531e-07,
+      "compiled_max_abs_error": 0.0
+    },
+    "64": {
+      "reference": {
+        "median_ms": 1.4452714822255075,
+        "p95_ms": 1.7249670054297892,
+        "candidates_per_second": 44282.33780787629
+      },
+      "metal_layer_norm": {
+        "median_ms": 1.5298960206564516,
+        "p95_ms": 2.1819165907800184,
+        "candidates_per_second": 41832.908338789406
+      },
+      "compiled_reference": {
+        "median_ms": 1.492792012868449,
+        "p95_ms": 2.145558144547975,
+        "candidates_per_second": 42872.68383558798
+      },
+      "compiled_metal_layer_norm": {
+        "median_ms": 1.5622710052412003,
+        "p95_ms": 2.264084908529184,
+        "candidates_per_second": 40966.00384010775
+      },
+      "max_abs_error": 7.152557373046875e-07,
+      "compiled_max_abs_error": 0.0
+    }
+  },
+  "synthetic_decision_head_agreement_vs_bf16": {
+    "q8": {
+      "synthetic_top_choice_agreement": 0.9375,
+      "synthetic_probability_mae": 0.007590816356241703
+    },
+    "q4": {
+      "synthetic_top_choice_agreement": 0.75,
+      "synthetic_probability_mae": 0.07362757623195648
+    },
+    "note": "Scores from placeholder role spans, not compiled Valen decisions; not a quality metric."
+  },
+  "note": "Synthetic role positions test operator cost and numerical equivalence only; no Valen task-quality claim."
+}

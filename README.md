@@ -33,7 +33,7 @@ cargo build --release --locked
 
 网页安装流程默认使用 `mlx-community/Qwen3.5-0.8B-OptiQ-4bit`，注册 API 名称 `qwen3.5-0.8b`。首次启动不会自动下载权重；在控制台确认下载源后安装，权重需按其许可证自行下载。
 
-MLX 后端使用 MLX-LM 原生推理与连续批处理。Apple M1 Pro 上的本地原生基准在 batch 6 达到约 276 输出 token/s 聚合吞吐；这是多请求批量吞吐，不代表单请求速度或 LiteInfer HTTP 吞吐。测试配置、版本与复现命令见[MLX 基准说明](docs/mlx-optimization.md)。
+MLX 后端使用 MLX-LM 原生推理与连续批处理。**Apple M1 Pro（16 GB）实测：单请求约 135 token/s，3 路批量约 230 token/s（实测 235），6 路批量约 276 token/s，8 路约 263 token/s。**批量数据是并行请求的聚合生成吞吐，不是单个请求速度，也不等同于 LiteInfer HTTP API 吞吐。模型为 `Qwen3.5-0.8B-OptiQ-4bit`，提示 128 token、生成 64 token；测试配置、软件版本与复现命令见[MLX 基准说明](docs/mlx-optimization.md)和[原始结果](benchmarks/qwen35-08b-mlx-m1pro.json)。
 
 连接已有后端时，先复制 `examples/config.toml` 为 `config.toml`，编辑其中的 `models`：将 `upstream_model`、`base_url` 改为后端实际值，然后创建访问密钥：
 
@@ -135,6 +135,7 @@ curl http://127.0.0.1:8787/v1/decisions \
 
 - [文档导航](docs/README.md)：配置、后端、部署、架构、协议与迁移。
 - [网页模型管理](docs/model-management.md)：纯前端配置校验、下载源、MLX 转换、自检、启动与恢复。
+- [Valen MLX 实验](docs/valen-mlx.md)：原生权重转换、BF16/q8/q4 对照、自定义 Metal 算子及 M1 Pro 实测边界。
 - [压测方法与结果](docs/testing.md)：区分模拟服务开销和真实模型推理；不把模拟 token 当成模型吞吐。
 - [安全与隐私](SECURITY.md)：公开内容、密钥、日志与部署边界。
 - [贡献指南](CONTRIBUTING.md)：检查命令和代码原则。

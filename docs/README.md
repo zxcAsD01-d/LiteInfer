@@ -16,3 +16,4 @@
 - [MLX 推理优化与接入](mlx-optimization.md)：可选优化包、连续批处理、缓存、稀疏采样和适用范围。
 - [网页模型管理与自动配置](model-management.md)：HuggingFace / ModelScope 镜像、安装运行环境、MLX 转换、模型校验和运行时应用。
 - [Valen Decisions 本地 API](valen-decisions.md)：决策模型注册、多模态请求和 usage 处理。
+- [Valen MLX 转换与基准](valen-mlx.md)：原生检查点转换、q8/q4 速度与误差、手写 Metal 算子验证。

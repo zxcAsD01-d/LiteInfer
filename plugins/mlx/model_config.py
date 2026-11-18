@@ -38,6 +38,7 @@ def metadata(directory: Path, weights: bool = True) -> dict:
     return {"model_type": model_type, "context_length": context,
             "vocab_size": text["vocab_size"], "layers": text["num_hidden_layers"],
             "hidden_size": text["hidden_size"], "quantization": quantization,
+            "vision": bool(config.get("vision_config") or config.get("optiq_vision")),
             "chat_template": has_chat, "remote_code_declared": bool(config.get("auto_map")),
             "weight_bytes": validate_weights(directory) if weights else None,
             "recommended_output_tokens": min(1024, max(1, context - 1)) if context else 1024}

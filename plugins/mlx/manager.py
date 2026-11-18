@@ -6,6 +6,7 @@ import os
 from pathlib import Path
 import platform
 import re
+import shutil
 import subprocess
 import sys
 import uuid
@@ -16,6 +17,7 @@ from model_config import ModelError, metadata, read_json
 DEPENDENCIES = ["mlx==0.32.4", "mlx-lm==0.32.2", "transformers==5.23.0",
                 "huggingface-hub==2.4.0", "modelscope==1.40.3"]
 PATTERNS = ["*.json", "*.safetensors", "*.model", "*.txt", "*.tiktoken", "*.jinja", "LICENSE*"]
+DEFAULT_ALIAS = "qwen3.5-0.8b-q4"
 
 
 def emit(stage: str, **fields) -> None:
@@ -148,6 +150,13 @@ def self_test(directory: Path) -> dict:
     return metadata(directory)
 
 
+def is_mlx_artifact(directory: Path) -> bool:
+    """识别已由 MLX/OptiQ 导出的目录，避免重复量化。"""
+    config = read_json(directory / "config.json")
+    return bool(config.get("mlx_lm_extra_tensors") or config.get("optiq_vision")
+                or (directory / "optiq").is_dir())
+
+
 def adapt_chat_end(directory: Path) -> None:
     """Preserve EOS and add ChatML's explicit message boundary for chat templates."""
     from transformers import AutoTokenizer
@@ -184,13 +193,20 @@ def prepare(root: Path, request: dict) -> dict:
     source = download(request, work / "source")
     metadata(source)
     output = work / "model"
-    emit("converting", artifact=artifact)
-    with redirect_stdout(sys.stderr):
-        convert(str(source), str(output), trust_remote_code=False, **options)
+    if is_mlx_artifact(source):
+        emit("reusing_mlx_artifact", artifact=artifact)
+        if source.resolve().is_relative_to(work.resolve()):
+            source.rename(output)
+        else:
+            shutil.copytree(source, output)
+    else:
+        emit("converting", artifact=artifact)
+        with redirect_stdout(sys.stderr):
+            convert(str(source), str(output), trust_remote_code=False, **options)
     emit("validating", artifact=artifact)
     adapt_chat_end(output)
     info = self_test(output)
-    alias = request.get("alias", "local-model")
+    alias = request.get("alias", DEFAULT_ALIAS)
     manifest = {"alias": alias, "metadata": info, "precision": request.get("precision", "q4")}
     temporary = work / "manifest.tmp"
     temporary.write_text(json.dumps(manifest, ensure_ascii=False))
@@ -228,8 +244,9 @@ def main() -> None:
         count, port = request["concurrency"], request["port"]
         args = [sys.executable, "-m", "mlx_lm", "server", "--model", str(directory),
                 "--host", "127.0.0.1", "--port", str(port), "--decode-concurrency", str(count),
-                "--prompt-concurrency", str(min(count, 8)), "--prefill-step-size", "128",
-                "--prompt-cache-bytes", "268435456", "--temp", "0.7", "--top-k", "64", "--top-p", "0.9",
+                "--prompt-concurrency", str(min(count, 8)), "--prefill-step-size", "2048",
+                "--prompt-cache-size", "64", "--prompt-cache-bytes", "2147483648",
+                "--temp", "0.7", "--top-k", "64", "--top-p", "0.9",
                 "--log-level", "ERROR"]
         os.execv(sys.executable, args)
     else:

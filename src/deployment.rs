@@ -35,7 +35,7 @@ pub struct Source {
     pub group_size: u32,
 }
 fn default_alias() -> String {
-    "local-model".into()
+    "qwen3.5-0.8b-q4".into()
 }
 fn default_precision() -> String {
     "q4".into()

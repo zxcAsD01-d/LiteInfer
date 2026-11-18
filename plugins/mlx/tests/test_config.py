@@ -7,7 +7,7 @@ import unittest
 from unittest.mock import patch
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-from manager import adapt_chat_end, download, precision_options, validate_source
+from manager import adapt_chat_end, download, is_mlx_artifact, precision_options, validate_source
 from model_config import ModelError, metadata, validate_weights
 
 
@@ -46,6 +46,16 @@ class ConfigTests(unittest.TestCase):
             with self.assertRaises(ModelError): validate_source({**source, **changes})
         self.assertTrue(precision_options({"precision": "q4"}, {"quantization": None})["quantize"])
         with self.assertRaises(ModelError): precision_options({"precision": "q8"}, {"quantization": {"bits": 4}})
+
+    def test_native_mlx_artifact_detection(self):
+        with tempfile.TemporaryDirectory() as root:
+            directory = Path(root)
+            fixture(directory)
+            self.assertFalse(is_mlx_artifact(directory))
+            config = json.loads((directory / "config.json").read_text())
+            config["optiq_vision"] = {"weight": "optiq_vision.safetensors"}
+            (directory / "config.json").write_text(json.dumps(config))
+            self.assertTrue(is_mlx_artifact(directory))
 
     def test_chatml_boundary_preserves_eos_zero_and_context(self):
         with tempfile.TemporaryDirectory() as root:

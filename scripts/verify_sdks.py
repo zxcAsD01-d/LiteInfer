@@ -12,7 +12,7 @@ from openai import OpenAI, DefaultHttpxClient as OpenAIHttpClient
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--url", default="http://127.0.0.1:8787")
-    parser.add_argument("--model", default="local-model")
+    parser.add_argument("--model", default="qwen3.5-0.8b-q4")
     args = parser.parse_args()
     key = os.environ["LITEINFER_API_KEY"]
     with OpenAI(base_url=args.url + "/v1", api_key=key, max_retries=0,

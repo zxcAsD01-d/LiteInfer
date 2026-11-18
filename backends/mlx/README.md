@@ -16,3 +16,5 @@ python -m unittest discover -s backends/mlx/tests -v
 `--prompt` 可重复。CLI 使用模型聊天模板，输出逐 token JSON 事件和统计；模型文件与分词器分开时可加 `--tokenizer`。缺聊天模板时明确报错，仅在确实需要续写时用 `--raw`。
 
 这不是独立 HTTP 服务，也不是 MLX-LM server 的自动补丁。应在自建后端的单一 GPU 工作线程内调用 `BatchEngine`，由 HTTP 层处理鉴权、SSE、超时与取消。`BatchEngine` 实例绑定一个模型，多模型可各建实例；各实例并发之和仍共享同一 GPU 预算。
+
+仓库根目录还提供两个可复用脚本：`scripts/convert_mlx.py` 用于标准 MLX-LM q4/q8 转换，`scripts/benchmark_mlx_http.py` 用于 OpenAI 兼容 HTTP 的并发、p95、TTFT 和后端 token/s 测试。

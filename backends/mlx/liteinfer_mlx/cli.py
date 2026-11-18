@@ -45,7 +45,7 @@ def main() -> None:
     if args.fuse_llama:
         fuse_model(model)
     stop_tokens = [[token] for token in tokenizer.eos_token_ids]
-    engine = BatchEngine(model, "local-model", config, stop_tokens, len(tokenizer))
+    engine = BatchEngine(model, "qwen3.5-0.8b-q4", config, stop_tokens, len(tokenizer))
     try:
         run(engine, tokenizer, args, sampling)
     finally:

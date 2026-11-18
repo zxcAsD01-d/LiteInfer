@@ -16,7 +16,7 @@ pub(super) async fn terminate(child: &mut Child) -> Result<(), ApiError> {
 }
 
 impl Deployment {
-    async fn context(&self, request: &Launch) -> Result<Option<u64>, ApiError> {
+    async fn context(&self, request: &Launch) -> Result<(Option<u64>, bool), ApiError> {
         validate_alias(&request.alias)?;
         if request.port == 0 || request.max_output_tokens == 0 {
             return Err(ApiError::bad("端口或输出预算无效"));
@@ -43,7 +43,7 @@ impl Deployment {
         if context.is_some_and(|n| u64::from(request.max_output_tokens) >= n) {
             return Err(ApiError::bad("输出预算必须小于模型上下文长度"));
         }
-        Ok(context)
+        Ok((context, manifest["metadata"]["vision"].as_bool().unwrap_or(false)))
     }
 
     async fn ready(state: &AppState, child: &mut Child, base: &str) -> Result<String, ApiError> {
@@ -98,7 +98,7 @@ impl Deployment {
     }
 
     pub async fn launch(state: Arc<AppState>, request: Launch) -> Result<Value, ApiError> {
-        let context_length = state.deployment.context(&request).await?;
+        let (context_length, vision) = state.deployment.context(&request).await?;
         Self::reconcile(&state).await?;
         if request.port == state.config.listen.port() {
             return Err(ApiError::bad("后端端口不能与网关相同"));
@@ -116,7 +116,7 @@ impl Deployment {
         if state.registry.list()?.iter().any(|m| m.id == request.alias) {
             return Err(ApiError::bad("别名已存在"));
         }
-        let (child, model) = Self::backend(&state, &request, context_length).await?;
+        let (child, model) = Self::backend(&state, &request, context_length, vision).await?;
         Self::apply(&state, model, &request).await?;
         *managed = Some(Managed {
             alias: request.alias.clone(),
@@ -129,6 +129,7 @@ impl Deployment {
         state: &AppState,
         request: &Launch,
         context_length: Option<u64>,
+        vision: bool,
     ) -> Result<(Child, Model), ApiError> {
         let listener = tokio::net::TcpListener::bind(("127.0.0.1", request.port))
             .await
@@ -152,7 +153,7 @@ impl Deployment {
             max_output_tokens: request.max_output_tokens,
             api_key_env: None,
             tools: false,
-            vision: false,
+            vision,
             cache_isolation_parameter: None,
         };
         Ok((child, model))

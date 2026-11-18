@@ -99,3 +99,30 @@ python backends/mlx/benchmark.py --model ./models/mlx-chat --tokenizer ./models/
 从未安装包的源码目录运行时，设置 `PYTHONPATH=backends/mlx`。量化选项用于未量化权重，已量化模型应省略；不能借此自动保证所有模型/量化模式兼容。测试使用小型随机 Llama 验证 full/incremental float32/q4 logits 一致性、缓存分叉和作用域隔离、采样分布/种子隔离、批处理完成与取消。真实权重吞吐另记在 `benchmarks/mlx-*-components.json`。
 
 基准预热并复用前缀，固定输出长度、不启用 EOS 停止；统计直接 BatchEngine 的计算时间，不包含 HTTP、分词和加载时间，也不评价模型回答质量。报告仅保存汇总数字，不含路径、提示正文、输出或密钥。与旧 HTTP 压测不是同一指标，不可直接比较。
+
+## 默认 Qwen 0.8B Q4
+
+网页模型管理默认填入 `mlx-community/Qwen3.5-0.8B-OptiQ-4bit`，API 别名为 `qwen3.5-0.8b-q4`。这是已经导出的 MLX 混合 4/8-bit 权重，包含独立视觉权重；下载后应先做配置校验和前向自检，不要再次量化。模型权重不随仓库发布。
+
+普通 HuggingFace 未转换模型可以使用仓库内的转换脚本：
+
+```sh
+python3 scripts/convert_mlx.py \
+  ./models/huggingface-model ./models/mlx-model \
+  --bits 4 --group-size 64
+```
+
+脚本调用当前 Python 环境中的 `mlx_lm convert`，输出目录必须为空，失败会保留源目录。已经带有 `quantization`、MLX 配置和视觉权重的模型应直接复用，避免 q4 到 q4 的二次量化。
+
+### HTTP 并发基准
+
+服务启动后可以用下面的脚本分别测冷提示和相同前缀缓存命中。脚本只输出状态、延迟和后端 usage，不保存提示正文或生成内容：
+
+```sh
+LITEINFER_API_KEY='本地测试Key' python3 scripts/benchmark_mlx_http.py \
+  --url http://127.0.0.1:8787 --model qwen3.5-0.8b-q4 \
+  --concurrencies 1 3 6 8 10 --requests 20 --max-tokens 128 \
+  --stream --prompt-mode same --output benchmarks/mlx-q4-http-local.json
+```
+
+本机 Qwen 0.8B Q4 测试结果记录在 `benchmarks/mlx-q4-http.json`：原生 MLX batch 8 约 235 tok/s、峰值内存约 2.0 GiB；HTTP 解码/预填充并发 8 时，客户端并发 6 约 220–246 tok/s、p95 约 0.8–1.2 秒，客户端并发 10 约 214–220 tok/s、p95 约 1.8–2.1 秒。相同前缀命中缓存后延迟明显降低；继续增大 batch 的收益很小。

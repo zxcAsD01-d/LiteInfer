@@ -89,6 +89,10 @@ impl Lease {
             .as_u64()
             .unwrap_or(self.completion);
     }
+    pub fn decision_usage(&mut self, input_tokens: u64, output_tokens: u64) {
+        self.prompt = input_tokens;
+        self.completion = output_tokens;
+    }
     pub fn finish(&mut self, status: u16) {
         self.status = status;
     }

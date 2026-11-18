@@ -7,12 +7,12 @@
 <div class="row"><button id="model-runtime">检查环境 / 刷新模型</button><button id="model-setup">安装独立 MLX 环境</button></div>
 <div class="model-grid">
 <label>下载源<select id="model-source"><option value="huggingface">HuggingFace</option><option value="modelscope">ModelScope</option><option value="local">本地目录</option></select></label>
-<label>仓库 ID / 本地目录<input id="model-repository" placeholder="owner/model-name"></label>
+<label>仓库 ID / 本地目录<input id="model-repository" value="mlx-community/Qwen3.5-0.8B-OptiQ-4bit" placeholder="owner/model-name"></label>
 <label>自定义镜像根地址（可选）<input id="model-endpoint" placeholder="https://your-hub.example"></label>
 <label>revision（可选）<input id="model-revision" placeholder="分支、标签或 commit"></label>
 <label>令牌环境变量名（可选）<input id="model-token_env" placeholder="HF_TOKEN，不填写实际令牌"></label>
-<label>API 模型别名<input id="model-alias" value="local-model"></label>
-<label>精度<select id="model-precision"><option value="q4">q4</option><option value="q8">q8</option><option value="float16">float16</option><option value="keep">保留现有精度</option></select></label>
+<label>API 模型别名<input id="model-alias" value="qwen3.5-0.8b-q4"></label>
+<label>精度<select id="model-precision"><option value="q4">q4</option><option value="q8">q8</option><option value="float16">float16</option><option value="keep" selected>保留现有精度</option></select></label>
 <label>量化分组<select id="model-group_size"><option>64</option><option>32</option><option>128</option></select></label>
 </div>
 <div class="row"><button id="model-preview">预览配置</button><button id="model-inspect">校验模型配置</button><button id="model-prepare">下载、转换并自检</button></div>

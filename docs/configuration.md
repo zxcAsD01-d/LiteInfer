@@ -68,3 +68,11 @@ python -m mlx_lm server --model ./models/mlx-model --host 127.0.0.1 --port 8081 
 并发和排队无固定产品上限，校验 `N + queue_capacity` 的整数溢出与 Tokio `Semaphore::MAX_PERMITS`。这是运行时可表示的容量，并非机器可承载的请求数。默认入口容量在运行时最大值处饱和，不会溢出；显式入口容量可以比调度容量低，以便较早限流。
 
 先让后端 batch / parallel 与 N 对齐，再逐步增加 N 并测量总 token/s、首 token 延迟和 KV 内存。增加队列只增加等待容量；增加 SSE 缓冲会增加慢客户端占用。TCP 建连突发还受操作系统 listen backlog 和文件描述符预算影响，与请求调度的 N 是两个维度。可选 MLX 优化及直接调用方式见 [推理优化](mlx-optimization.md)。
+
+Qwen 0.8B Q4 的 MLX-LM 参考启动参数：
+
+```sh
+python -m mlx_lm server --model ./models/mlx-model --host 127.0.0.1 --port 8081 --decode-concurrency 8 --prompt-concurrency 8 --prefill-step-size 2048 --prompt-cache-size 64 --prompt-cache-bytes 2147483648
+```
+
+上面的参数是 Apple Silicon 实测起点；内存较小的机器应优先下调 `prompt-cache-bytes`，并重新测量 p95 和总 token/s。

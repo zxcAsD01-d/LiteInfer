@@ -1,0 +1,28 @@
+{
+  "model": "Qwen3.5-0.8B-OptiQ-4bit",
+  "alias": "qwen3.5-0.8b-q4",
+  "backend": "MLX-LM HTTP server",
+  "configuration": {
+    "decode_concurrency": 8,
+    "prompt_concurrency": 8,
+    "prefill_step_size": 2048,
+    "prompt_cache_entries": 64,
+    "prompt_cache_bytes": 2147483648
+  },
+  "native_mlx": {
+    "batch_1_tokens_per_second": 118,
+    "batch_3_tokens_per_second": 200,
+    "batch_6_tokens_per_second": 232,
+    "batch_8_tokens_per_second": 235,
+    "batch_8_peak_memory_gib": 2.0
+  },
+  "http": [
+    {"concurrency": 6, "tokens_per_second_range": [220, 246], "p95_seconds_range": [0.8, 1.2]},
+    {"concurrency": 10, "tokens_per_second_range": [214, 220], "p95_seconds_range": [1.8, 2.1]}
+  ],
+  "notes": [
+    "相同前缀提示命中缓存后延迟明显降低。",
+    "继续增加 batch 或并发的吞吐收益很小，应优先观察 Metal 内存与 p95。",
+    "该报告只记录汇总结果，不包含提示正文、生成内容、密钥或本机路径。"
+  ]
+}

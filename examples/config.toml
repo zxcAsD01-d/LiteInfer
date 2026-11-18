@@ -15,12 +15,13 @@ database = ".liteinfer/state.sqlite3"
 allow_remote = false
 
 [[models]]
-id = "local-model"
-upstream_model = "local-model"
-base_url = "http://127.0.0.1:8080/v1"
+id = "qwen3.5-0.8b-q4"
+upstream_model = "Qwen3.5-0.8B-OptiQ-4bit"
+base_url = "http://127.0.0.1:8081/v1"
 max_output_tokens = 1024
 tools = false
 vision = false
+context_length = 262144
 # 后端需要鉴权时填写环境变量名，不要填写密钥：
 # api_key_env = "LOCAL_BACKEND_KEY"
 # 仅当后端支持该参数时启用，按 API Key 隔离后端缓存：

@@ -35,7 +35,7 @@ pub struct Source {
     pub group_size: u32,
 }
 fn default_alias() -> String {
-    "qwen3.5-0.8b-q4".into()
+    "qwen3.5-0.8b".into()
 }
 fn default_precision() -> String {
     "q4".into()

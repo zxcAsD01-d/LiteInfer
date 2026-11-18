@@ -43,7 +43,10 @@ impl Deployment {
         if context.is_some_and(|n| u64::from(request.max_output_tokens) >= n) {
             return Err(ApiError::bad("输出预算必须小于模型上下文长度"));
         }
-        Ok((context, manifest["metadata"]["vision"].as_bool().unwrap_or(false)))
+        Ok((
+            context,
+            manifest["metadata"]["vision"].as_bool().unwrap_or(false),
+        ))
     }
 
     async fn ready(state: &AppState, child: &mut Child, base: &str) -> Result<String, ApiError> {

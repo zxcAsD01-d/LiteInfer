@@ -7,7 +7,7 @@ import unittest
 from unittest.mock import patch
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-from manager import adapt_chat_end, download, is_mlx_artifact, precision_options, validate_source
+from manager import DEFAULT_ALIAS, adapt_chat_end, download, is_mlx_artifact, precision_options, validate_source
 from model_config import ModelError, metadata, validate_weights
 
 
@@ -21,6 +21,9 @@ def fixture(directory: Path):
 
 
 class ConfigTests(unittest.TestCase):
+    def test_default_model_alias(self):
+        self.assertEqual(DEFAULT_ALIAS, "qwen3.5-0.8b")
+
     def test_native_context_and_shards(self):
         with tempfile.TemporaryDirectory() as root:
             directory = Path(root)

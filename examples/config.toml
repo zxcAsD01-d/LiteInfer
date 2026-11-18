@@ -15,7 +15,7 @@ database = ".liteinfer/state.sqlite3"
 allow_remote = false
 
 [[models]]
-id = "qwen3.5-0.8b-q4"
+id = "qwen3.5-0.8b"
 upstream_model = "Qwen3.5-0.8B-OptiQ-4bit"
 base_url = "http://127.0.0.1:8081/v1"
 max_output_tokens = 1024

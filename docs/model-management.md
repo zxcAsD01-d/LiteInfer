@@ -15,7 +15,7 @@ cargo build --release --locked
 
 1. 点击“检查环境 / 刷新模型”。插件会检查 Apple Silicon、Python 依赖版本和已转换产物。
 2. 点击“安装独立 MLX 环境”，建立私有虚拟环境并安装固定版本的 MLX、MLX-LM、Transformers、HuggingFace Hub 和 ModelScope。
-3. 选择 HuggingFace / ModelScope / 本地目录，填写仓库 `owner/model` 或 Mac 本地目录；可指定 revision、自定义镜像根地址和令牌环境变量名。
+3. 默认已选 Qwen3.5‑0.8B OptiQ q4 与 API 别名 `qwen3.5-0.8b`。选择 HuggingFace / ModelScope / 本地目录，填写仓库 `owner/model` 或 Mac 本地目录；可指定 revision、自定义镜像根地址和令牌环境变量名。
 4. 设置 API 别名、q4/q8/float16/保留精度和量化分组。先点击“预览配置”检查表单，再点击“校验模型配置”读取架构、词表、层数、聊天模板、原生上下文和推荐输出预算。
 5. 点击“下载、转换并自检”。下方显示配置下载、权重下载、转换、验证等阶段；这是阶段进度，不是字节百分比。仅通过自检的产物会出现在列表。
 6. 选择产物、填写本机后端端口和输出预算，点击“启动并应用”。模型加载并返回有效 `/v1/models` 后，Rust 网关才会注册别名，现有 API 客户端立即可用。

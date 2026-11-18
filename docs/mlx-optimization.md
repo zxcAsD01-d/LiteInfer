@@ -102,7 +102,7 @@ python backends/mlx/benchmark.py --model ./models/mlx-chat --tokenizer ./models/
 
 ## 默认 Qwen 0.8B Q4
 
-网页模型管理默认填入 `mlx-community/Qwen3.5-0.8B-OptiQ-4bit`，API 别名为 `qwen3.5-0.8b-q4`。这是已经导出的 MLX 混合 4/8-bit 权重，包含独立视觉权重；下载后应先做配置校验和前向自检，不要再次量化。模型权重不随仓库发布。
+网页模型管理默认填入 `mlx-community/Qwen3.5-0.8B-OptiQ-4bit`，API 别名为 `qwen3.5-0.8b`。这是已经导出的 MLX 混合 4/8-bit 权重，包含独立视觉权重；下载后应先做配置校验和前向自检，不要再次量化。模型权重不随仓库发布。
 
 普通 HuggingFace 未转换模型可以使用仓库内的转换脚本：
 
@@ -120,9 +120,29 @@ python3 scripts/convert_mlx.py \
 
 ```sh
 LITEINFER_API_KEY='本地测试Key' python3 scripts/benchmark_mlx_http.py \
-  --url http://127.0.0.1:8787 --model qwen3.5-0.8b-q4 \
+  --url http://127.0.0.1:8787 --model qwen3.5-0.8b \
   --concurrencies 1 3 6 8 10 --requests 20 --max-tokens 128 \
   --stream --prompt-mode same --output benchmarks/mlx-q4-http-local.json
 ```
 
-本机 Qwen 0.8B Q4 测试结果记录在 `benchmarks/mlx-q4-http.json`：原生 MLX batch 8 约 235 tok/s、峰值内存约 2.0 GiB；HTTP 解码/预填充并发 8 时，客户端并发 6 约 220–246 tok/s、p95 约 0.8–1.2 秒，客户端并发 10 约 214–220 tok/s、p95 约 1.8–2.1 秒。相同前缀命中缓存后延迟明显降低；继续增大 batch 的收益很小。
+## Apple M1 Pro 原生 MLX 基准（2026-11-18）
+
+使用本地已安装的 MLX 0.32.4 / MLX-LM 0.32.2 和 Qwen3.5‑0.8B OptiQ q4，MacBook Pro Apple M1 Pro、16 GB 统一内存。运行 `mlx_lm.benchmark`，每组先预热，再测 3 次；每条输入 128 tokens，固定生成 64 tokens。完整 JSON 记录在 `benchmarks/qwen35-08b-mlx-m1pro.json`。结果为生成吞吐平均值，batch 吞吐按一组并发请求合计：
+
+| Batch | 平均生成吞吐 | 峰值内存 |
+| ---: | ---: | ---: |
+| 1 | 135.5 token/s | 0.94 GiB |
+| 3 | 235.0 token/s | 1.28 GiB |
+| 6 | 276.1 token/s | 1.85 GiB |
+| 8 | 263.0 token/s | 2.01 GiB |
+
+可复现命令（把路径替换为本机模型目录）：
+
+```sh
+for batch in 1 3 6 8; do
+  python -m mlx_lm.benchmark --model ./models/Qwen3.5-0.8B-OptiQ-4bit \
+    --prompt-tokens 128 --generation-tokens 64 --batch-size "$batch" --num-trials 3
+done
+```
+
+这是 MLX-LM 原生批量基准，不经过 LiteInfer HTTP；batch 6 的 276.1 token/s 是并发总吞吐，batch 1 的 135.5 token/s 更接近单请求测试。它验证 MLX 原生优化路径，不代表独立 `backends/mlx` 自定义算子被 MLX-LM server 调用。HTTP 压测历史数据记录在 `benchmarks/mlx-q4-http.json`，是另一轮、另一层级的测试，不能与这组结果混算。

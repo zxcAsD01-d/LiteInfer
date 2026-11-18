@@ -1,6 +1,7 @@
 use liteinfer::{
     api::anthropic::{self, Translator},
     config::Config,
+    deployment::Source,
     sse::{Decoder, Frame},
     store::Store,
 };
@@ -36,6 +37,18 @@ fn configuration_rejects_unsafe_or_ambiguous_values() {
     let mut bad = config;
     bad.models[0].base_url = "file:///tmp/test".into();
     assert!(bad.validate().is_err());
+}
+
+#[test]
+fn model_manager_defaults_to_qwen35_alias_and_q4() {
+    let source: Source = serde_json::from_value(json!({
+        "source": "huggingface",
+        "repository": "mlx-community/Qwen3.5-0.8B-OptiQ-4bit"
+    }))
+    .unwrap();
+    assert_eq!(source.alias, "qwen3.5-0.8b");
+    assert_eq!(source.precision, "q4");
+    source.validate().unwrap();
 }
 
 #[test]

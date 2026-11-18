@@ -69,7 +69,7 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--url", default="http://127.0.0.1:8787")
     parser.add_argument("--key-env", default="LITEINFER_API_KEY")
-    parser.add_argument("--model", default="qwen3.5-0.8b-q4")
+    parser.add_argument("--model", default="qwen3.5-0.8b")
     parser.add_argument("--requests", type=int, default=200)
     parser.add_argument("--concurrency", type=int, default=10)
     parser.add_argument("--protocol", choices=["openai", "anthropic"], default="openai")

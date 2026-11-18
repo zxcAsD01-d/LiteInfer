@@ -79,7 +79,7 @@ def one(args: argparse.Namespace, number: int) -> dict[str, object]:
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--url", default="http://127.0.0.1:8787")
-    parser.add_argument("--model", default="qwen3.5-0.8b-q4")
+    parser.add_argument("--model", default="qwen3.5-0.8b")
     parser.add_argument("--key-env", default="LITEINFER_API_KEY")
     parser.add_argument("--concurrencies", type=int, nargs="+", default=[1, 3, 6, 8, 10])
     parser.add_argument("--requests", type=int, default=20)

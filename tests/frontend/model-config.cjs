@@ -1,4 +1,5 @@
 const assert = require("node:assert/strict");
+const fs = require("node:fs");
 const { sourceConfig, summarize } = require("../../assets/model-config.js");
 const valid = { source: "huggingface", repository: "jiaheng0815/feng-30m", alias: "gpt-6.5astra", precision: "q4", group_size: 64 };
 assert.equal(sourceConfig(valid).repository, valid.repository);
@@ -14,4 +15,7 @@ assert.equal(summarize(model).context_length, 32768);
 assert.equal(summarize({ model_type: "qwen3", text_config: model }).context_length, 32768);
 assert.equal(summarize(model).recommended_output_tokens, 1024);
 assert.throws(() => summarize({ ...model, max_position_embeddings: 0 }));
+const consoleHtml = fs.readFileSync(require.resolve("../../assets/console.html"), "utf8");
+assert.match(consoleHtml, /value="mlx-community\/Qwen3.5-0.8B-OptiQ-4bit"/);
+assert.match(consoleHtml, /id="model-alias" value="qwen3.5-0.8b"/);
 console.log("前端配置校验通过：下载源、镜像、别名、32K 配置，无网络请求。");

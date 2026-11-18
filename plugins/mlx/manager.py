@@ -17,7 +17,7 @@ from model_config import ModelError, metadata, read_json
 DEPENDENCIES = ["mlx==0.32.4", "mlx-lm==0.32.2", "transformers==5.23.0",
                 "huggingface-hub==2.4.0", "modelscope==1.40.3"]
 PATTERNS = ["*.json", "*.safetensors", "*.model", "*.txt", "*.tiktoken", "*.jinja", "LICENSE*"]
-DEFAULT_ALIAS = "qwen3.5-0.8b-q4"
+DEFAULT_ALIAS = "qwen3.5-0.8b"
 
 
 def emit(stage: str, **fields) -> None:

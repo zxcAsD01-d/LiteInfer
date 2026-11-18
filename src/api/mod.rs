@@ -1,5 +1,6 @@
 mod admin;
 pub mod anthropic;
+mod decisions;
 pub mod models;
 pub mod proxy;
 
@@ -29,6 +30,7 @@ pub fn router(state: Arc<AppState>) -> Router {
         .route("/v1/models",get(models))
         .route("/v1/chat/completions",post(chat))
         .route("/v1/completions",post(completions))
+        .route("/v1/decisions",post(decisions))
         .route("/v1/messages",post(messages))
         .route("/v1/messages/count_tokens",post(count_tokens))
         .route("/admin/metrics",get(admin::metrics))
@@ -112,6 +114,14 @@ async fn completions(
     body: Result<Bytes, BytesRejection>,
 ) -> Result<Response, ApiError> {
     proxy::execute(state, headers, parse(body)?, false, true).await
+}
+
+async fn decisions(
+    State(state): State<Arc<AppState>>,
+    headers: HeaderMap,
+    body: Result<Bytes, BytesRejection>,
+) -> Result<Response, ApiError> {
+    decisions::execute(state, headers, parse(body)?).await
 }
 
 async fn messages(

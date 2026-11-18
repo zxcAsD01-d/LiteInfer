@@ -1,6 +1,11 @@
 # 变更记录
 
-## 未发布 · 2026-11-17
+## 0.2.0 · 2026-11-18
+
+- 统一 LiteInfer Rust API 与网页控制台发布版本为 0.2.0，首次安装默认使用 Qwen3.5‑0.8B OptiQ q4，API 别名统一为 `qwen3.5-0.8b`。
+- MLX 后端继续使用 MLX-LM 原生推理、连续批处理与前缀缓存；明确区分原生批量基准、HTTP 吞吐和独立实验性 MLX 组件。
+- 在 Apple M1 Pro 上以 128 prompt / 64 generation、3 次试验复测，batch 6 平均解码吞吐约 276 token/s；附可复现参数和单请求/批量吞吐边界。
+- 保留 Valen Decisions API 与既有通用模型、OpenAI/Anthropic 兼容能力。
 
 - 网页配置向导、浏览器本地 JSON 校验与预览；首次启动自动生成配置和临时管理密钥。
 - HuggingFace / ModelScope / 本地目录下载，支持 revision、自定义镜像根地址与环境令牌引用。

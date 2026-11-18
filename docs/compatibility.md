@@ -1,5 +1,9 @@
 # 协议兼容矩阵
 
+## Valen Decisions
+
+POST /v1/decisions 采用 Valen Decisions SDK 的请求与响应结构，支持文本、内嵌图片、内嵌视频和 bbox 决策；通过 LiteInfer API Key 鉴权、N 并发队列和请求监控。响应保留模型答案，并把 usage.input_tokens / usage.output_tokens 记入监控。决定模型输出的 output token 数通常为 0，这是官方后端用量值。该端点不接受 stream: true，也不是聊天补全接口。具体多模态字段和启动示例见 [Valen Decisions 部署说明](valen-decisions.md)。
+
 ## OpenAI 格式
 
 | 功能 | 状态 |

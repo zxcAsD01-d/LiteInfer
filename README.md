@@ -2,13 +2,13 @@
 
 **为 macOS 本地模型提供轻量、可观测的 Rust API 服务。**
 
-一个入口连接 MLX、llama.cpp 等 OpenAI 兼容推理后端，向客户端提供 OpenAI 和 Anthropic Messages 格式。默认仅监听本机，默认 3 路、支持配置任意正整数 N 并发，带有有界队列、流式背压、API Key 管理和中文控制台。
+一个入口连接 MLX、llama.cpp 等 OpenAI 兼容推理后端，向客户端提供 OpenAI、Anthropic Messages，以及 Valen 决策 API。默认仅监听本机，默认 3 路、支持配置任意正整数 N 并发，带有有界队列、流式背压、API Key 管理和中文控制台。
 
 LiteInfer 的服务核心使用 Rust；模型计算由独立推理后端执行。它不是新的模型训练框架，也不把协议兼容等同于模型拥有相应能力。
 
 ## 功能
 
-- **双协议**：OpenAI Chat Completions / Completions，Anthropic Messages；JSON 和 SSE。
+- **多协议**：OpenAI Chat Completions / Completions、Anthropic Messages；JSON 和 SSE。Valen /v1/decisions 支持 JSON、文本、图片、视频及真实 token 用量。
 - **通用模型注册**：公开别名映射实际模型和后端，不硬编码模型架构。
 - **资源控制**：默认 3 活跃 + 24 等待，FIFO 准入、超时、取消和过载 429；并发与排队容量可自由配置。
 - **流式管线**：共享连接池、UTF-8 安全解析、可配置背压通道（默认 8 块）、大小预算和断连回收。
@@ -111,6 +111,17 @@ with client.messages.stream(model="qwen3.5-0.8b-q4", max_tokens=128,
         print(text, end="", flush=True)
     print(stream.get_final_message().usage)
 ```
+
+## Valen Decisions 示例
+
+该路由使用官方 Decisions 请求结构，需传 model、input 和 questions；它输出分类/判断结果，不是聊天补全接口。图片和视频应以内嵌 base64 数据块提交。完整部署说明见 [Valen Decisions 部署说明](docs/valen-decisions.md)。
+
+~~~sh
+curl http://127.0.0.1:8787/v1/decisions \
+  -H "Authorization: Bearer $LITEINFER_API_KEY" \
+  -H 'Content-Type: application/json' \
+  -d '{"model":"valen-decision-1.5-0.8b","input":"A package delivery is late.","questions":[{"name":"shipping","type":"predicate","instructions":"The request is about shipping."}]}'
+~~~
 
 ## 兼容边界
 

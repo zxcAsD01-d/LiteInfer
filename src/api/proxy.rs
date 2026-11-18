@@ -290,7 +290,7 @@ fn validate_completion(payload: &Value, completion: bool) -> Result<(), ApiError
     Ok(())
 }
 
-pub(super) async fn read_bounded(
+async fn read_bounded(
     response: reqwest::Response,
     deadline: Instant,
     limit: usize,

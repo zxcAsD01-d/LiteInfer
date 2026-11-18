@@ -54,8 +54,7 @@ impl Harness {
         let (backend, task) = start(
             Router::new()
                 .route("/v1/chat/completions", post(mock))
-                .route("/v1/completions", post(mock))
-                .route("/v1/decisions", post(mock_decisions)),
+                .route("/v1/completions", post(mock)),
         )
         .await;
         let config = Config {
@@ -190,43 +189,6 @@ async fn mock(Json(body): Json<Value>) -> Response {
         HeaderValue::from_static("text/event-stream"),
     );
     response
-}
-
-async fn mock_decisions(Json(body): Json<Value>) -> Json<Value> {
-    assert_eq!(body["model"], "actual-model");
-    assert_eq!(body["input"][0]["content"][1]["type"], "input_image");
-    Json(
-        json!({"model":"actual-model","answers":[{"name":"visible","type":"predicate","probability":0.98}],
-        "usage":{"input_tokens":23,"output_tokens":0}}),
-    )
-}
-
-#[tokio::test]
-async fn decisions_route_authenticates_forwards_multimodal_input_and_records_usage() {
-    let app = Harness::new().await;
-    let body = json!({"model":"alias","input":[{"role":"user","content":[
-        {"type":"input_text","text":"Is the object visible?"},
-        {"type":"input_image","image_url":"data:image/png;base64,aGVsbG8="}]}],
-        "questions":[{"name":"visible","type":"predicate","instructions":"The object is visible."}]});
-    let unauthorized = app
-        .client
-        .post(format!("{}/v1/decisions", app.url))
-        .json(&body)
-        .send()
-        .await
-        .unwrap();
-    assert_eq!(unauthorized.status(), StatusCode::UNAUTHORIZED);
-    let response = app.post("/v1/decisions", body).send().await.unwrap();
-    assert_eq!(response.status(), StatusCode::OK);
-    let payload: Value = response.json().await.unwrap();
-    assert_eq!(payload["model"], "alias");
-    assert_eq!(payload["usage"]["input_tokens"], 23);
-    assert_eq!(payload["answers"][0]["probability"], 0.98);
-    assert_eq!(app.state.metrics.prompt_tokens.load(Ordering::Relaxed), 23);
-    assert_eq!(
-        app.state.metrics.completion_tokens.load(Ordering::Relaxed),
-        0
-    );
 }
 
 #[tokio::test]

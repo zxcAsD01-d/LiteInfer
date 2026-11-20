@@ -7,8 +7,8 @@ name = "liteinfer-mlx"
 version = "0.2.0"
 description = "Optional MLX inference optimizations for LiteInfer"
 requires-python = ">=3.11"
-license = "PolyForm-Noncommercial-1.0.0"
-license-files = ["LICENSE", "NOTICE", "LICENSE-MIT-legacy.txt"]
+license = "Apache-2.0"
+license-files = ["LICENSE", "NOTICE", "LICENSE-MIT-legacy.txt", "LICENSE-PolyForm-Noncommercial-1.0.0-legacy.txt", "NOTICE-PolyForm-Noncommercial-1.0.0-legacy.txt"]
 dependencies = ["mlx==0.32.4", "mlx-lm==0.32.2"]
 
 [project.scripts]

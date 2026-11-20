@@ -1,0 +1,13 @@
+LiteInfer
+Copyright (c) 2026 LiteInfer contributors
+
+Required Notice: Copyright (c) 2026 LiteInfer contributors.
+Original software within the rights holders' licensing authority is offered under
+PolyForm Noncommercial License 1.0.0. See LICENSE and LICENSING.md.
+Earlier license grants, third-party licenses and all existing attributions remain valid.
+Third-party software, models, data and media are not relicensed by this notice.
+
+This MLX adapter follows the repository licensing change introduced on 2026-11-20.
+Existing MIT rights remain valid; see LICENSE-MIT-legacy.txt.
+MLX, MLX-LM and model weights retain their own licenses.
+Scope and commercial contact: https://github.com/zxcAsD01-d/LiteInfer/blob/main/LICENSING.md

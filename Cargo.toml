@@ -4,7 +4,7 @@ version = "0.2.0"
 edition = "2024"
 rust-version = "1.85"
 description = "Lightweight local inference API for macOS with OpenAI and Anthropic protocols"
-license = "PolyForm-Noncommercial-1.0.0"
+license = "Apache-2.0"
 repository = "https://github.com/zxcAsD01-d/LiteInfer"
 
 [dependencies]

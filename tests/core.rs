@@ -7,6 +7,30 @@ use liteinfer::{
 };
 use serde_json::{Value, json};
 
+#[test]
+fn legacy_database_keeps_keys_and_requests_after_migration() {
+    let folder = tempfile::tempdir().unwrap();
+    let path = folder.path().join("legacy.sqlite3");
+    let db = rusqlite::Connection::open(&path).unwrap();
+    db.execute_batch("CREATE TABLE requests(id TEXT PRIMARY KEY,key_id TEXT,model TEXT,protocol TEXT,status INTEGER,prompt_tokens INTEGER,completion_tokens INTEGER,duration_ms INTEGER,created REAL);
+        CREATE TABLE keys(id TEXT PRIMARY KEY,name TEXT NOT NULL,hash TEXT UNIQUE NOT NULL,created REAL NOT NULL,revoked INTEGER NOT NULL DEFAULT 0);
+        INSERT INTO requests VALUES('old','key','example','openai',200,12,8,41,100);
+        INSERT INTO keys VALUES('key','example','existing-hash',100,0);").unwrap();
+    drop(db);
+    for _ in 0..2 {
+        let store = Store::open(&path).unwrap();
+        assert_eq!(store.active_keys().unwrap()["existing-hash"], "key");
+        let record = &store.recent().unwrap()[0];
+        assert_eq!(record.id, "old");
+        assert_eq!(record.finished_at, None);
+        assert_eq!(record.cached_prompt_tokens, None);
+        let summary = store.overview(900, 101.0).unwrap().summary.inference;
+        assert_eq!(summary.output_tokens, 8);
+        assert_eq!(summary.cache_hit_rate, None);
+        assert_eq!(summary.avg_output_tokens_per_second, None);
+    }
+}
+
 fn events(bytes: Vec<bytes::Bytes>) -> Vec<Value> {
     bytes
         .into_iter()
@@ -37,6 +61,22 @@ fn configuration_rejects_unsafe_or_ambiguous_values() {
     let mut bad = config;
     bad.models[0].base_url = "file:///tmp/test".into();
     assert!(bad.validate().is_err());
+}
+
+#[test]
+fn ssd_cache_is_opt_in_and_rejects_unbounded_writer_settings() {
+    let mut config = Config::default();
+    assert_eq!(config.mlx.cache.ssd_max_bytes, 0);
+    config.mlx.cache.ssd_max_bytes = 1024 * 1024 * 1024;
+    config.validate().unwrap();
+    config.mlx.cache.write_queue_entries = 0;
+    assert!(config.validate().is_err());
+    config.mlx.cache.write_queue_entries = 2;
+    config.mlx.cache.write_queue_bytes = 0;
+    assert!(config.validate().is_err());
+    config.mlx.cache.write_queue_bytes = 1024;
+    config.mlx.cache.ttl_seconds = 0;
+    assert!(config.validate().is_err());
 }
 
 #[test]

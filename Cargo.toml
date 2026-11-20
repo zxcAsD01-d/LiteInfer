@@ -1,6 +1,6 @@
 [package]
 name = "liteinfer"
-version = "0.3.0"
+version = "1.0.0"
 edition = "2024"
 rust-version = "1.85"
 description = "Lightweight local inference API for macOS with OpenAI and Anthropic protocols"
@@ -17,8 +17,9 @@ rand = "0.9"
 reqwest = { version = "0.12", default-features = false, features = ["json", "stream", "rustls-tls"] }
 rusqlite = { version = "0.37", features = ["bundled"] }
 serde = { version = "1", features = ["derive"] }
-serde_json = "1"
+serde_json = { version = "1", features = ["preserve_order"] }
 sha2 = "0.10"
+sysinfo = { version = "0.36.1", default-features = false, features = ["system", "disk"] }
 tokio = { version = "1", features = ["full"] }
 toml = "0.9"
 tower-http = { version = "0.6", features = ["limit", "request-id"] }
@@ -29,6 +30,12 @@ uuid = { version = "1", features = ["v4"] }
 [dev-dependencies]
 tempfile = "3"
 tower = { version = "0.5", features = ["util"] }
+
+[target.'cfg(target_os = "macos")'.dependencies]
+libc = "0.2"
+objc2-core-foundation = { version = "0.3.2", default-features = false, features = ["std", "CFNumber", "CFString", "CFDictionary"] }
+objc2-io-kit = { version = "0.3.2", default-features = false, features = ["std", "libc"] }
+sysinfo = { version = "0.36.1", default-features = false, features = ["component"] }
 
 [profile.release]
 lto = "thin"

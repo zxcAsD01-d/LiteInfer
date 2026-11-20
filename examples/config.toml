@@ -33,3 +33,14 @@ context_length = 262144
 python = "python3" # 需 Python 3.11+；用于创建独立虚拟环境
 directory = ".liteinfer/mlx"
 task_timeout_seconds = 7200
+
+[mlx.cache]
+memory_max_entries = 64
+memory_max_bytes = 2147483648
+# SSD 默认关闭。设为 4294967296 可启用 4 GiB 二级缓存；会持久保存输入 token 与模型状态。
+ssd_max_bytes = 0
+ssd_max_entries = 512
+ttl_seconds = 3600
+min_tokens = 128
+write_queue_entries = 2
+write_queue_bytes = 268435456

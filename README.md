@@ -1,4 +1,4 @@
-# LiteInfer 0.3.0
+# LiteInfer 1.0.0
 
 **为 macOS 本地模型提供轻量、可观测的 Rust API 服务。**
 
@@ -16,10 +16,13 @@ LiteInfer 的服务核心使用 Rust；模型计算由独立推理后端执行�
 - **网页模型管理**：HuggingFace、ModelScope、自定义镜像或本地目录，读取原生上下文，安装独立环境、下载、MLX 转换、自检、启动并即时注册 API；支持重启恢复。
 - **工具调用**：转发 OpenAI function tools；转换 Anthropic tool_use / tool_result 和 JSON 参数增量。
 - **真实统计**：使用后端返回的 token 用量；不以字符数估算，不伪造缺失用量。
-- **中文控制台**：创建/撤销 Key，查看运行指标、最近请求和 token 用量。
+- **运行控制台**：查看出字速度、输出吞吐、首段延迟、缓存命中、设备温度、内存压力和可读的电池放电功率，统一管理模型、请求日志和密钥。见[数据口径](docs/console-design.md)。
+- **RAM / SSD 分层缓存**：按 Key 隔离，提供索引、容量与查找延迟分析；SSD 默认关闭。见[配置与实测](docs/ssd-cache.md)。
 - **隐私默认值**：Key 只保存 SHA-256；请求日志不保存正文、工具参数、密钥或上游错误原文。
 
 ## 快速开始
+
+Apple Silicon Mac 可下载 GitHub Release 的 `.pkg` 直接安装。见 [macOS 安装与升级](docs/install-macos.md)。
 
 准备 Rust 1.85+，可从网页控制台安装模型，也可连接已有 OpenAI 兼容后端。Apple Silicon 推荐使用支持 Metal 的 MLX 或 llama.cpp 后端；Intel Mac 可连接适配其硬件的后端。
 

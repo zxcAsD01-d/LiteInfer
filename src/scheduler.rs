@@ -32,6 +32,9 @@ pub struct Lease {
     status: u16,
     prompt: u64,
     completion: u64,
+    cached_prompt_tokens: Option<u64>,
+    first_output: Option<Instant>,
+    last_output: Option<Instant>,
 }
 
 impl Lease {
@@ -46,6 +49,7 @@ impl Lease {
             ApiError::new(StatusCode::TOO_MANY_REQUESTS, "等待队列已满，请稍后重试")
         })?;
         let started = Instant::now();
+        let created = timestamp();
         state.metrics.queued.fetch_add(1, Ordering::Relaxed);
         let waiting = Waiting {
             state: state.clone(),
@@ -76,10 +80,13 @@ impl Lease {
             model,
             protocol: protocol.into(),
             started,
-            created: timestamp(),
+            created,
             status: 499,
             prompt: 0,
             completion: 0,
+            cached_prompt_tokens: None,
+            first_output: None,
+            last_output: None,
         })
     }
 
@@ -88,6 +95,22 @@ impl Lease {
         self.completion = usage["completion_tokens"]
             .as_u64()
             .unwrap_or(self.completion);
+        self.cached_prompt_tokens = usage["prompt_tokens_details"]["cached_tokens"]
+            .as_u64()
+            .filter(|count| *count <= self.prompt);
+    }
+
+    pub fn observe_output(&mut self, received: Instant) {
+        self.first_output.get_or_insert(received);
+        self.last_output = Some(received);
+    }
+
+    fn output_tokens_per_second(&self) -> Option<f64> {
+        let seconds = self
+            .last_output?
+            .duration_since(self.first_output?)
+            .as_secs_f64();
+        (seconds > 0.0 && self.completion > 1).then(|| (self.completion - 1) as f64 / seconds)
     }
     pub fn decision_usage(&mut self, input_tokens: u64, output_tokens: u64) {
         self.prompt = input_tokens;
@@ -114,6 +137,7 @@ impl Drop for Lease {
         metrics
             .completion_tokens
             .fetch_add(self.completion, Ordering::Relaxed);
+        let success = (200..300).contains(&self.status);
         let record = RequestRecord {
             id: self.id.clone(),
             key_id: self.key_id.clone(),
@@ -124,6 +148,13 @@ impl Drop for Lease {
             completion_tokens: self.completion,
             duration_ms: self.started.elapsed().as_millis().min(u64::MAX as u128) as u64,
             created: self.created,
+            finished_at: Some(timestamp()),
+            cached_prompt_tokens: self.cached_prompt_tokens.filter(|_| success),
+            first_output_ms: self
+                .first_output
+                .filter(|_| success)
+                .map(|first| first.duration_since(self.started).as_secs_f64() * 1000.0),
+            output_tokens_per_second: success.then(|| self.output_tokens_per_second()).flatten(),
         };
         if self.state.records.try_send(record).is_err() {
             metrics.records_dropped.fetch_add(1, Ordering::Relaxed);

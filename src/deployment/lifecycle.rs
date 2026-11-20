@@ -157,7 +157,7 @@ impl Deployment {
             api_key_env: None,
             tools: false,
             vision,
-            cache_isolation_parameter: None,
+            cache_isolation_parameter: Some("cache_salt".into()),
         };
         Ok((child, model))
     }

@@ -35,9 +35,42 @@ impl Deployment {
             include_str!("../../plugins/mlx/model_config.py"),
         )
         .await?;
+        self.cache_modules(&directory).await?;
         let path = directory.join("manager.py");
         publish(&path, include_str!("../../plugins/mlx/manager.py")).await?;
         Ok(path)
+    }
+
+    async fn cache_modules(&self, directory: &std::path::Path) -> Result<(), ApiError> {
+        let package = directory.join("liteinfer_mlx");
+        fs::create_dir_all(&package).await.map_err(|_| internal())?;
+        let sources = [
+            ("__init__.py", ""),
+            (
+                "cache_settings.py",
+                include_str!("../../backends/mlx/liteinfer_mlx/cache_settings.py"),
+            ),
+            (
+                "cache_index.py",
+                include_str!("../../backends/mlx/liteinfer_mlx/cache_index.py"),
+            ),
+            (
+                "disk_cache.py",
+                include_str!("../../backends/mlx/liteinfer_mlx/disk_cache.py"),
+            ),
+            (
+                "prompt_cache.py",
+                include_str!("../../backends/mlx/liteinfer_mlx/prompt_cache.py"),
+            ),
+            (
+                "cached_server.py",
+                include_str!("../../backends/mlx/liteinfer_mlx/cached_server.py"),
+            ),
+        ];
+        for (name, source) in sources {
+            publish(&package.join(name), source).await?;
+        }
+        Ok(())
     }
 
     pub(super) async fn spawn_plugin(
@@ -54,6 +87,9 @@ impl Deployment {
         };
         body["action"] = json!(action);
         body["root"] = json!(self.root.canonicalize().map_err(|_| internal())?);
+        if action == "serve" {
+            body["cache_config"] = json!(self.config.cache);
+        }
         let mut child = Command::new(python)
             .arg("-u")
             .arg(script)
@@ -66,6 +102,7 @@ impl Deployment {
             .stderr(Stdio::null())
             .env("HF_HUB_DISABLE_PROGRESS_BARS", "1")
             .env("TOKENIZERS_PARALLELISM", "false")
+            .env("LITEINFER_CACHE_ADMIN_TOKEN", &self.cache_admin_token)
             .kill_on_drop(true)
             .spawn()
             .map_err(|_| {

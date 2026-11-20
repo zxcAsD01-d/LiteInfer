@@ -1,0 +1,10 @@
+{
+  "memory_max_entries": 64,
+  "memory_max_bytes": 2147483648,
+  "ssd_max_entries": 512,
+  "ssd_max_bytes": 4294967296,
+  "ttl_seconds": 3600,
+  "min_tokens": 128,
+  "write_queue_entries": 2,
+  "write_queue_bytes": 268435456
+}

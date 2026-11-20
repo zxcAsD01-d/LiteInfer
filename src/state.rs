@@ -8,7 +8,7 @@ use serde_json::{Value, json};
 use std::{
     collections::HashMap,
     sync::{
-        Arc, RwLock,
+        Arc, Mutex, RwLock,
         atomic::{AtomicU64, AtomicUsize, Ordering},
     },
     time::Duration,
@@ -54,6 +54,7 @@ pub struct AppState {
     pub upstream_keys: HashMap<String, String>,
     pub registry: crate::registry::Registry,
     pub deployment: crate::deployment::Deployment,
+    pub telemetry: Mutex<crate::telemetry::Telemetry>,
 }
 
 impl AppState {
@@ -113,6 +114,7 @@ impl AppState {
             upstream_keys,
             registry,
             deployment,
+            telemetry: Mutex::new(crate::telemetry::Telemetry::default()),
         }))
     }
 

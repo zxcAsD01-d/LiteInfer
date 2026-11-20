@@ -106,6 +106,153 @@ impl Harness {
     }
 }
 
+#[tokio::test]
+async fn monitoring_reports_persisted_request_stats_and_protects_resource_data() {
+    let app = Harness::new().await;
+    for path in ["/admin/overview", "/admin/system"] {
+        let response = app
+            .client
+            .get(format!("{}{path}", app.url))
+            .bearer_auth(KEY)
+            .send()
+            .await
+            .unwrap();
+        assert_eq!(response.status(), StatusCode::UNAUTHORIZED);
+    }
+    let now = liteinfer::store::timestamp();
+    let db = rusqlite::Connection::open(&app.state.config.database).unwrap();
+    for (id, model, status, ms, age) in [
+        ("a", "alias", 200, 25, 10.0),
+        ("b", "alias", 502, 50, 20.0),
+        ("c", "second", 499, 80, 40.0),
+        ("older", "alias", 200, 999, 1800.0),
+    ] {
+        db.execute(
+            "INSERT INTO requests(id,key_id,model,protocol,status,prompt_tokens,completion_tokens,duration_ms,created)
+             VALUES(?1,'example',?2,'openai',?3,11,7,?4,?5)",
+            rusqlite::params![id, model, status, ms, now - age],
+        )
+        .unwrap();
+    }
+    let get = |path: &str| {
+        app.client
+            .get(format!("{}{path}", app.url))
+            .header("x-admin-key", ADMIN)
+    };
+    let response = get("/admin/overview?window=15m").send().await.unwrap();
+    assert_eq!(response.headers()["cache-control"], "no-store");
+    let report: Value = response.json().await.unwrap();
+    let summary = &report["summary"];
+    assert_eq!(summary["requests"], 3);
+    assert_eq!(summary["succeeded"], 1);
+    assert_eq!(summary["failed"], 1);
+    assert_eq!(summary["cancelled"], 1);
+    assert_eq!(summary["prompt_tokens"], 33);
+    assert_eq!(summary["p50_duration_ms"], 50);
+    assert_eq!(summary["p95_duration_ms"], 80);
+    assert_eq!(report["retained_records"], 4);
+    assert_eq!(report["series"][29]["requests"], 2);
+    assert_eq!(report["models"][1]["model"], "second");
+    assert_eq!(
+        get("/admin/overview?window=7d")
+            .send()
+            .await
+            .unwrap()
+            .status(),
+        StatusCode::BAD_REQUEST
+    );
+    let system: Value = get("/admin/system")
+        .send()
+        .await
+        .unwrap()
+        .json()
+        .await
+        .unwrap();
+    assert_eq!(system["limits"]["concurrency"], 3);
+    assert!(system["uptime_seconds"].is_u64());
+    assert!(system.get("database").is_none());
+}
+
+#[tokio::test]
+async fn cache_management_requires_admin_and_a_managed_backend() {
+    let app = Harness::new().await;
+    for method in [reqwest::Method::GET, reqwest::Method::DELETE] {
+        let url = format!("{}/admin/mlx/cache", app.url);
+        let denied = app
+            .client
+            .request(method.clone(), &url)
+            .bearer_auth(KEY)
+            .send()
+            .await
+            .unwrap();
+        assert_eq!(denied.status(), StatusCode::UNAUTHORIZED);
+        let missing = app
+            .client
+            .request(method, &url)
+            .header("x-admin-key", ADMIN)
+            .send()
+            .await
+            .unwrap();
+        assert_eq!(missing.status(), StatusCode::BAD_REQUEST);
+    }
+}
+
+#[tokio::test]
+async fn stream_monitoring_separates_speed_throughput_and_cache_coverage() {
+    let app = Harness::new().await;
+    for (mode, stream) in [
+        ("monitor-hit", true),
+        ("monitor-miss", false),
+        ("unknown-cache", false),
+    ] {
+        let response = app
+            .post("/v1/chat/completions", body(mode, stream))
+            .send()
+            .await
+            .unwrap();
+        assert_eq!(response.status(), StatusCode::OK);
+        assert!(!response.text().await.unwrap().is_empty());
+    }
+    let store = &app.state.store;
+    for _ in 0..100 {
+        if store.recent().unwrap().len() == 3 {
+            break;
+        }
+        tokio::time::sleep(Duration::from_millis(10)).await;
+    }
+    let report = store.overview(900, liteinfer::store::timestamp()).unwrap();
+    let inference = report.summary.inference;
+    assert_eq!(inference.output_tokens, 12);
+    assert_eq!(inference.speed_samples, 1);
+    assert!(inference.p95_first_output_ms.is_some());
+    assert_eq!(inference.cache_samples, 2);
+    assert_eq!(inference.cache_hit_rate, Some(0.5));
+    assert_eq!(inference.prompt_token_reuse_rate, Some(5.0 / 26.0));
+    let tokens: f64 = report
+        .series
+        .iter()
+        .map(|bucket| bucket.output_tokens_per_second * report.bucket_seconds as f64)
+        .sum();
+    assert_eq!(tokens, 12.0);
+}
+
+#[tokio::test]
+async fn chat_cache_namespace_overrides_client_supplied_isolation_keys() {
+    let app = Harness::new().await;
+    let mut model = app.state.registry.get("alias").unwrap();
+    model.id = "scoped-chat".into();
+    model.cache_isolation_parameter = Some("cache_salt".into());
+    app.state.registry.install(model, false).unwrap();
+    let mut payload = json!({"model":"scoped-chat","messages":[{"role":"user","content":"hello"}],
+                             "cache_salt":"forged","prompt_cache_key":"forged"});
+    api::proxy::prepare(&app.state, &mut payload, "authenticated-key-id", false).unwrap();
+    assert_eq!(
+        payload["cache_salt"],
+        liteinfer::store::hash("authenticated-key-id")
+    );
+    assert!(payload.get("prompt_cache_key").is_none());
+}
+
 #[tokio::test(flavor = "multi_thread", worker_threads = 4)]
 async fn http_pipeline_supports_configurable_n() {
     let mut rows = Vec::new();
@@ -166,7 +313,12 @@ async fn mock(Json(body): Json<Value>) -> Response {
     let tool = prompt.contains("tool");
     let hang = prompt.contains("hang");
     let missing = prompt.contains("missing-usage");
-    let usage = json!({"prompt_tokens":13,"completion_tokens":4,"total_tokens":17});
+    let mut usage = json!({"prompt_tokens":13,"completion_tokens":4,"total_tokens":17});
+    let monitored = prompt.contains("monitor-");
+    if monitored {
+        usage["prompt_tokens_details"] =
+            json!({"cached_tokens": if prompt.contains("monitor-hit") { 5 } else { 0 }});
+    }
     let message = if tool {
         json!({"role":"assistant","content":null,"tool_calls":[{"id":"call_test","type":"function","function":{"name":"write_file","arguments":"{\"content\":\"中文\"}"}}]})
     } else {
@@ -178,7 +330,10 @@ async fn mock(Json(body): Json<Value>) -> Response {
     }
     let output = async_stream::stream! {
         let deltas=if tool{vec![json!({"tool_calls":[{"index":0,"id":"call_test","type":"function","function":{"name":"write_file","arguments":"{\"content\":"}}]}),json!({"tool_calls":[{"index":0,"function":{"arguments":"\"中文\"}"}}]})]}else{vec![json!({"role":"assistant","content":"你"}),json!({"content":"好"})]};
-        for delta in deltas{yield Ok::<_,Infallible>(liteinfer::sse::data(&json!({"model":"actual-model","object":"chat.completion.chunk","id":"upstream","created":0,"choices":[{"index":0,"delta":delta,"finish_reason":null}]})));}
+        for delta in deltas{
+            yield Ok::<_,Infallible>(liteinfer::sse::data(&json!({"model":"actual-model","object":"chat.completion.chunk","id":"upstream","created":0,"choices":[{"index":0,"delta":delta,"finish_reason":null}]})));
+            if monitored { tokio::time::sleep(Duration::from_millis(40)).await; }
+        }
         if hang{tokio::time::sleep(Duration::from_secs(30)).await;}
         yield Ok(liteinfer::sse::data(&json!({"model":"actual-model","choices":[{"index":0,"delta":{},"finish_reason":finish}]})));
         if !missing{yield Ok(liteinfer::sse::data(&json!({"model":"actual-model","choices":[],"usage":usage})));}

@@ -1,28 +1,136 @@
 <!doctype html>
-<html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="icon" href="data:,"><title>LiteInfer · 本地推理</title><link rel="stylesheet" href="/assets/console.css"></head><body>
-<header><div><h1>LiteInfer</h1><p>本地模型，一个轻量入口。</p></div><span class="badge">Rust / OpenAI / Anthropic</span></header>
-<section class="panel"><h2>连接管理服务</h2><p>管理密钥只保存在当前页面内存中。请求内容和 API 密钥不会写入请求日志。</p><div class="row"><input id="admin" type="password" placeholder="LITEINFER_ADMIN_KEY" autocomplete="off"><button id="refresh">连接 / 刷新</button></div><p id="status" role="status"></p></section>
-<section class="panel"><h2>运行概况</h2><div class="metrics" id="metrics"><small>连接后显示运行数据</small></div></section>
-<section class="panel"><h2>模型安装与自动配置</h2><p>在网页完成下载、MLX 转换、自检、启动与 API 注册。仅支持 Apple Silicon；转换在这台 Mac 上执行。</p>
-<div class="row"><button id="model-runtime">检查环境 / 刷新模型</button><button id="model-setup">安装独立 MLX 环境</button></div>
-<div class="model-grid">
-<label>下载源<select id="model-source"><option value="huggingface">HuggingFace</option><option value="modelscope">ModelScope</option><option value="local">本地目录</option></select></label>
-<label>仓库 ID / 本地目录<input id="model-repository" value="mlx-community/Qwen3.5-0.8B-OptiQ-4bit" placeholder="owner/model-name"></label>
-<label>自定义镜像根地址（可选）<input id="model-endpoint" placeholder="https://your-hub.example"></label>
-<label>revision（可选）<input id="model-revision" placeholder="分支、标签或 commit"></label>
-<label>令牌环境变量名（可选）<input id="model-token_env" placeholder="HF_TOKEN，不填写实际令牌"></label>
-<label>API 模型别名<input id="model-alias" value="qwen3.5-0.8b"></label>
-<label>精度<select id="model-precision"><option value="q4">q4</option><option value="q8">q8</option><option value="float16">float16</option><option value="keep" selected>保留现有精度</option></select></label>
-<label>量化分组<select id="model-group_size"><option>64</option><option>32</option><option>128</option></select></label>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#12262b"><link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Crect width='40' height='40' rx='10' fill='%230b8d77'/%3E%3Cpath d='M12 10v20h17v-6H18V10' fill='white'/%3E%3C/svg%3E">
+  <title>LiteInfer · 运行控制台</title><link rel="stylesheet" href="/assets/console.css">
+</head>
+<body>
+<a class="skip-link" href="#main">跳至主要内容</a>
+<svg class="icon-library" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><defs>
+  <!-- Lucide SVG icons, v0.468.0; see assets/LUCIDE-LICENSE.txt. -->
+  <symbol id="i-grid" viewBox="0 0 24 24"><rect width="7" height="7" x="3" y="3" rx="1" /><rect width="7" height="7" x="14" y="3" rx="1" /><rect width="7" height="7" x="14" y="14" rx="1" /><rect width="7" height="7" x="3" y="14" rx="1" /></symbol>
+  <symbol id="i-box" viewBox="0 0 24 24"><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z" /><path d="m3.3 7 8.7 5 8.7-5" /><path d="M12 22V12" /></symbol>
+  <symbol id="i-cache" viewBox="0 0 24 24"><ellipse cx="12" cy="5" rx="9" ry="3" /><path d="M3 5V19A9 3 0 0 0 21 19V5" /><path d="M3 12A9 3 0 0 0 21 12" /></symbol>
+  <symbol id="i-list" viewBox="0 0 24 24"><path d="M3 12h.01" /><path d="M3 18h.01" /><path d="M3 6h.01" /><path d="M8 12h13" /><path d="M8 18h13" /><path d="M8 6h13" /></symbol>
+  <symbol id="i-key" viewBox="0 0 24 24"><path d="M2.586 17.414A2 2 0 0 0 2 18.828V21a1 1 0 0 0 1 1h3a1 1 0 0 0 1-1v-1a1 1 0 0 1 1-1h1a1 1 0 0 0 1-1v-1a1 1 0 0 1 1-1h.172a2 2 0 0 0 1.414-.586l.814-.814a6.5 6.5 0 1 0-4-4z" /><circle cx="16.5" cy="7.5" r=".5" fill="currentColor" /></symbol>
+  <symbol id="i-settings" viewBox="0 0 24 24"><line x1="21" x2="14" y1="4" y2="4" /><line x1="10" x2="3" y1="4" y2="4" /><line x1="21" x2="12" y1="12" y2="12" /><line x1="8" x2="3" y1="12" y2="12" /><line x1="21" x2="16" y1="20" y2="20" /><line x1="12" x2="3" y1="20" y2="20" /><line x1="14" x2="14" y1="2" y2="6" /><line x1="8" x2="8" y1="10" y2="14" /><line x1="16" x2="16" y1="18" y2="22" /></symbol>
+  <symbol id="i-arrow" viewBox="0 0 24 24"><path d="M5 12h14" /><path d="m12 5 7 7-7 7" /></symbol>
+  <symbol id="i-refresh" viewBox="0 0 24 24"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8" /><path d="M21 3v5h-5" /><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16" /><path d="M8 16H3v5" /></symbol>
+  <symbol id="i-download" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="7 10 12 15 17 10" /><line x1="12" x2="12" y1="15" y2="3" /></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" /><path d="m9 12 2 2 4-4" /></symbol>
+  <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" /></symbol>
+  <symbol id="i-pulse" viewBox="0 0 24 24"><path d="M22 12h-2.48a2 2 0 0 0-1.93 1.46l-2.35 8.36a.25.25 0 0 1-.48 0L9.24 2.18a.25.25 0 0 0-.48 0l-2.35 8.36A2 2 0 0 1 4.49 12H2" /></symbol>
+  <symbol id="i-tokens" viewBox="0 0 24 24"><path d="m18 16 4-4-4-4" /><path d="m6 8-4 4 4 4" /><path d="m14.5 4-5 16" /></symbol>
+  <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8" /><path d="m21 21-4.3-4.3" /></symbol>
+  <symbol id="i-server" viewBox="0 0 24 24"><rect width="20" height="8" x="2" y="2" rx="2" ry="2" /><rect width="20" height="8" x="2" y="14" rx="2" ry="2" /><line x1="6" x2="6.01" y1="6" y2="6" /><line x1="6" x2="6.01" y1="18" y2="18" /></symbol>
+  <symbol id="i-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" /><path d="M12 16v-4" /><path d="M12 8h.01" /></symbol>
+  <symbol id="i-menu" viewBox="0 0 24 24"><line x1="4" x2="20" y1="12" y2="12" /><line x1="4" x2="20" y1="6" y2="6" /><line x1="4" x2="20" y1="18" y2="18" /></symbol>
+  <symbol id="i-close" viewBox="0 0 24 24"><path d="M18 6 6 18" /><path d="m6 6 12 12" /></symbol>
+  <symbol id="i-copy" viewBox="0 0 24 24"><rect width="14" height="14" x="8" y="8" rx="2" ry="2" /><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2" /></symbol>
+  <symbol id="i-plus" viewBox="0 0 24 24"><path d="M5 12h14" /><path d="M12 5v14" /></symbol>
+</defs></svg>
+<div id="nav-scrim" class="nav-scrim" hidden></div>
+<aside class="sidebar" id="sidebar" aria-label="主导航">
+  <a class="brand" href="#overview" aria-label="LiteInfer 运行总览"><span class="brand-mark">L<span></span></span><span>LiteInfer<small>INFERENCE CONSOLE</small></span></a>
+  <div class="workspace"><span class="workspace-symbol"><svg class="icon"><use href="#i-server"/></svg></span><div>本地推理工作区<small>Local workspace</small></div><span class="workspace-dot"></span></div>
+  <div class="nav-caption">工作空间</div>
+  <nav class="nav-list">
+    <a href="#overview" class="nav-item active" data-view="overview" aria-current="page"><svg class="icon"><use href="#i-grid"/></svg>运行总览</a>
+    <a href="#models" class="nav-item" data-view="models"><svg class="icon"><use href="#i-box"/></svg>模型管理<span class="nav-count" id="nav-model-count">—</span></a>
+    <a href="#cache" class="nav-item" data-view="cache"><svg class="icon"><use href="#i-cache"/></svg>缓存分析</a>
+    <a href="#requests" class="nav-item" data-view="requests"><svg class="icon"><use href="#i-list"/></svg>请求日志</a>
+    <a href="#keys" class="nav-item" data-view="keys"><svg class="icon"><use href="#i-key"/></svg>访问密钥</a>
+  </nav>
+  <div class="nav-caption second-caption">管理</div><nav><a href="#settings" class="nav-item" data-view="settings"><svg class="icon"><use href="#i-settings"/></svg>系统设置</a></nav>
+  <div class="sidebar-bottom"><div class="node-label"><span class="status-dot" id="node-dot"></span><span id="node-state">等待连接节点</span></div><div class="version-line"><span>LiteInfer Console</span><span id="app-version">v1.0.0</span></div></div>
+</aside>
+<div class="app-shell">
+  <header class="topbar">
+    <div class="breadcrumb"><button class="icon-button mobile-menu" id="menu-toggle" aria-label="打开导航" aria-expanded="false"><svg class="icon"><use href="#i-menu"/></svg></button><span class="breadcrumb-home">工作空间</span><span class="breadcrumb-slash">/</span><span id="breadcrumb-current">运行总览</span></div>
+    <div class="topbar-actions"><button class="search-shortcut" id="quick-search"><svg class="icon"><use href="#i-search"/></svg><span>搜索请求</span><kbd>⌘ K</kbd></button><span class="topbar-divider"></span><span class="connection-badge" id="connection-badge"><span class="status-dot"></span><span>未连接</span></span><button class="account-button" id="connect-open" aria-label="连接管理服务"><span class="avatar">A</span><span id="account-label">连接管理</span></button></div>
+  </header>
+  <main id="main" tabindex="-1">
+    <div class="page-heading"><div><h1 id="page-title">运行总览</h1></div><div class="heading-actions"><label class="window-select"><svg class="icon"><use href="#i-clock"/></svg><select id="time-window" aria-label="统计时段"><option value="15m">最近 15 分钟</option><option value="1h" selected>最近 1 小时</option><option value="24h">最近 24 小时</option></select></label><button class="icon-button" id="refresh" aria-label="刷新运行数据" title="刷新运行数据"><svg class="icon"><use href="#i-refresh"/></svg></button><button class="button" id="export-report" title="导出报告" aria-label="导出报告"><svg class="icon"><use href="#i-download"/></svg>导出报告</button></div></div>
+    <div id="connection-notice" class="notice"><svg class="icon"><use href="#i-info"/></svg><span>连接管理服务，即可查看实时运行数据并管理推理资源。</span><button class="text-button" id="notice-connect">立即连接 <span>↗</span></button></div>
+    <div id="status" class="error-notice" role="status" hidden></div>
+
+    <section class="view" id="view-overview" aria-label="运行总览">
+      <div class="capacity-strip" aria-label="当前调度状态"><span id="capacity-active">活跃 —</span><span id="capacity-queued">排队 —</span><span id="capacity-peak">进程峰值 —</span></div>
+      <div class="stat-grid" id="overview-stats">
+        <article class="stat-card"><div class="stat-top"><span>请求总量</span><span class="stat-icon mint"><svg class="icon"><use href="#i-pulse"/></svg></span></div><div class="stat-value" id="stat-requests">—</div><div class="stat-bottom" id="stat-requests-note">所选时段内的已记录请求</div><div class="sparkline" id="spark-requests"></div></article>
+        <article class="stat-card"><div class="stat-top"><span>请求成功率</span><span class="stat-icon mint"><svg class="icon"><use href="#i-check"/></svg></span></div><div class="stat-value" id="stat-success">—</div><div class="stat-bottom" id="stat-success-note">暂无请求样本</div><div class="sparkline" id="spark-success"></div></article>
+        <article class="stat-card"><div class="stat-top"><span>P95 响应耗时</span><span class="stat-icon blue"><svg class="icon"><use href="#i-clock"/></svg></span></div><div class="stat-value" id="stat-latency">—</div><div class="stat-bottom" id="stat-latency-note">包含排队与生成时间</div><div class="sparkline" id="spark-latency"></div></article>
+        <article class="stat-card"><div class="stat-top"><span>Token 用量</span><span class="stat-icon violet"><svg class="icon"><use href="#i-tokens"/></svg></span></div><div class="stat-value" id="stat-tokens">—</div><div class="stat-bottom" id="stat-tokens-note">以实际后端 usage 为准</div><div class="token-meter" id="token-meter"></div></article>
+      </div>
+      <article class="panel performance-panel" aria-labelledby="performance-heading">
+        <div class="panel-heading"><div><h2 id="performance-heading">推理性能</h2><p>所选时段 · 仅成功请求</p></div><a class="text-link" href="#cache">缓存分析 <span>↗</span></a></div>
+        <dl class="monitor-grid">
+          <div><dt>流式出字速度</dt><dd id="output-speed">—</dd><small id="speed-note">流式样本均值</small></div>
+          <div><dt>全局输出吞吐</dt><dd id="output-throughput">—</dd><small id="throughput-note">所有模型 · 包含空闲时间</small></div>
+          <div><dt>P95 首段延迟</dt><dd id="first-output">—</dd><small>从进入调度队列到收到首段</small></div>
+          <div><dt>缓存请求命中率</dt><dd id="request-cache-hit">—</dd><small id="request-cache-note">仅统计提供缓存用量的后端</small></div>
+        </dl>
+      </article>
+      <div class="dashboard-main-grid">
+        <article class="panel traffic-panel">
+          <div class="panel-heading"><div><h2>运行趋势</h2><p>按请求完成时间统计</p></div><div class="chart-controls"><div class="chart-legend"><span><i class="legend-dot teal"></i><span id="volume-legend">请求量</span></span><span><i class="legend-line"></i><span id="secondary-legend">平均耗时</span></span></div><select id="chart-mode" aria-label="趋势指标"><option value="requests">请求流量</option><option value="output">输出性能</option></select></div></div>
+          <div id="traffic-chart" class="traffic-chart"><div class="empty-chart"><svg class="icon"><use href="#i-pulse"/></svg><strong>等待运行数据</strong></div></div>
+          <div class="chart-caption"><span id="chart-interval">30 个时间桶</span><span id="chart-unit">端到端耗时</span></div>
+        </article>
+        <article class="panel resource-panel"><div class="panel-heading"><div><h2>系统资源</h2><p id="host-label">当前运行节点</p></div><span class="small-icon"><svg class="icon"><use href="#i-server"/></svg></span></div><div id="resource-list" class="resource-list"><div class="resource"><div><span>CPU 使用率</span><strong id="cpu-value">—</strong></div><progress id="cpu-progress" value="0" max="100" aria-label="CPU 使用率"></progress><small id="cpu-note">连接后开始采集</small></div><div class="resource"><div><span>内存</span><strong id="memory-value">—</strong></div><progress id="memory-progress" value="0" max="100" aria-label="内存使用率"></progress><small id="memory-note">主机内存使用情况</small></div><div class="resource"><div><span>磁盘空间</span><strong id="disk-value">—</strong></div><progress id="disk-progress" value="0" max="100" aria-label="磁盘使用率"></progress><small id="disk-note">缓存所在磁盘</small></div></div><div class="resource-footer"><span>网关运行时间</span><strong id="uptime-value">—</strong></div></article>
+      </div>
+      <article class="panel hardware-panel" aria-labelledby="hardware-heading">
+        <div class="panel-heading"><div><h2 id="hardware-heading">设备状态</h2><p id="hardware-sampled">等待采样</p></div><span class="small-icon"><svg class="icon"><use href="#i-server"/></svg></span></div>
+        <dl class="monitor-grid">
+          <div><dt>内存压力</dt><dd id="memory-pressure">—</dd><small>macOS 系统压力级别</small></div>
+          <div><dt>传感器最高温度</dt><dd id="device-temperature">—</dd><small id="temperature-note">设备可读温度传感器</small></div>
+          <div><dt>电池放电功率</dt><dd id="device-power">—</dd><small id="power-note">电池电压 × 放电电流</small></div>
+        </dl>
+      </article>
+      <div class="dashboard-secondary-grid"><article class="panel"><div class="panel-heading"><div class="title-with-count"><h2>模型运行状态</h2><span class="count-badge" id="overview-model-count">0</span></div><a class="text-link" href="#models">管理模型 <span>↗</span></a></div><div class="table-scroll"><table><thead><tr><th>模型名称</th><th>状态</th><th>请求量</th><th>成功率</th><th>平均耗时</th></tr></thead><tbody id="overview-models"><tr><td colspan="5" class="empty-cell">连接后查看已注册模型</td></tr></tbody></table></div></article><article class="panel operations-panel"><div class="panel-heading"><h2>运行提示</h2><svg class="icon subdued"><use href="#i-info"/></svg></div><div id="operations" class="operations-list"><div class="operation"><span class="operation-symbol"><svg class="icon"><use href="#i-check"/></svg></span><div><strong>掌握服务状态</strong><p>连接管理服务后，在这里查看负载、异常及缓存提示。</p></div></div></div></article></div>
+      <article class="panel"><div class="panel-heading"><div><h2>最近请求</h2><p>只记录运行元数据，不保存请求正文</p></div><a class="text-link" href="#requests">查看全部 <span>↗</span></a></div><div class="table-scroll"><table><thead><tr><th>请求 ID</th><th>模型 / 协议</th><th>状态</th><th>Tokens</th><th>耗时</th><th>请求时间</th></tr></thead><tbody id="overview-requests"><tr><td colspan="6" class="empty-cell">暂无请求记录</td></tr></tbody></table></div></article>
+    </section>
+
+    <section class="view" id="view-models" aria-label="模型管理" hidden>
+      <div class="section-toolbar"><span class="section-note">管理已注册模型与本机 MLX 部署</span><button class="button" id="model-runtime"><svg class="icon"><use href="#i-refresh"/></svg>检查环境 / 刷新产物</button></div>
+      <div id="model-inventory" class="model-inventory"></div><div class="panel"><div class="panel-heading"><div><h2>部署任务</h2><p>下载、转换与自检的执行状态</p></div><span class="pill neutral" id="model-managed">等待连接</span></div><div id="model-jobs" class="job-list"><div class="inline-empty">暂无部署任务</div></div></div>
+      <article class="panel deployment-panel"><div class="panel-heading"><div><h2>部署新的推理模型</h2><p>选择来源，检查配置，准备产物后启动服务。</p></div><button class="button" id="model-setup">安装独立 MLX 环境</button></div>
+        <div class="step-line"><span class="step active"><b>1</b>配置来源</span><i></i><span class="step"><b>2</b>准备与自检</span><i></i><span class="step"><b>3</b>启动服务</span></div>
+        <div class="model-grid"><label>下载源<select id="model-source"><option value="huggingface">Hugging Face</option><option value="modelscope">ModelScope</option><option value="local">本地目录</option></select></label><label class="span-two">仓库 ID / 本地目录<input id="model-repository" value="mlx-community/Qwen3.5-0.8B-OptiQ-4bit" placeholder="owner/model-name"></label><label>API 模型别名<input id="model-alias" value="qwen3.5-0.8b"></label><label>模型精度<select id="model-precision"><option value="keep" selected>保留现有精度</option><option value="q4">q4</option><option value="q8">q8</option><option value="float16">float16</option></select></label><label>量化分组<select id="model-group_size"><option>64</option><option>32</option><option>128</option></select></label></div>
+        <details class="advanced-options"><summary>镜像、版本与鉴权配置</summary><div class="model-grid"><label>自定义镜像根地址<input id="model-endpoint" placeholder="https://your-hub.example"></label><label>Revision<input id="model-revision" placeholder="分支、标签或 commit"></label><label>令牌环境变量名<input id="model-token_env" placeholder="HF_TOKEN"><small>填写变量名，请勿填写实际令牌</small></label></div></details>
+        <div class="button-row"><button class="button" id="model-preview">预览配置</button><button class="button" id="model-inspect">校验模型配置</button><button class="button primary" id="model-prepare">准备模型产物 <span>↗</span></button></div>
+        <details class="advanced-options"><summary>在浏览器检查本地 config.json</summary><label class="file-label">文件仅在浏览器内解析<input id="model-file" type="file" accept=".json,application/json"></label></details>
+        <pre id="model-info" class="code-output" hidden></pre><p id="model-status" class="inline-status" role="status"></p>
+        <div class="launch-section"><h3>启动已验证的模型</h3><div class="model-grid"><label>已验证产物<select id="model-artifact"><option value="">请选择模型产物</option></select></label><label>本地后端端口<input id="model-port" type="number" min="1" max="65535" value="8081"></label><label>单次输出预算<input id="model-output" type="number" min="1" value="1024"></label></div><div class="button-row"><button class="button primary" id="model-launch"><svg class="icon"><use href="#i-pulse"/></svg>启动并应用</button><button class="button danger-quiet" id="model-stop">停止受管模型</button></div></div>
+      </article>
+    </section>
+
+    <section class="view" id="view-cache" aria-label="缓存分析" hidden>
+      <div class="section-toolbar"><span class="section-note" id="cache-state">等待连接受管 MLX 服务</span><button class="button danger-quiet" id="cache-clear" disabled>清理缓存</button></div>
+      <div class="stat-grid" id="cache-stats"></div>
+      <div class="two-column"><article class="panel"><div class="panel-heading"><div><h2>缓存层级</h2><p>优先从内存复用，SSD 扩大可复用工作集</p></div><svg class="icon subdued"><use href="#i-cache"/></svg></div><div id="cache-tiers" class="padded-content"><div class="inline-empty">受管模型启动后显示容量与命中数据</div></div></article><article class="panel"><div class="panel-heading"><div><h2>索引效率</h2><p>压缩 token 前缀树的结构与访问开销</p></div></div><div id="cache-index" class="padded-content"></div></article></div>
+      <div class="two-column"><article class="panel"><div class="panel-heading"><h2>查找与存储延迟</h2><span class="pill neutral">最近 512 个样本</span></div><div id="cache-latency" class="table-scroll"></div></article><article class="panel"><div class="panel-heading"><h2>缓存健康分析</h2></div><div id="cache-analysis" class="padded-content"><div class="inline-empty">暂无分析数据</div></div></article></div>
+      <p class="footnote">缓存计数自后端进程启动累计。SSD 命中率以 SSD 查询次数为分母；token 复用率反映实际跳过的预填充比例。</p>
+    </section>
+
+    <section class="view" id="view-requests" aria-label="请求日志" hidden>
+      <article class="panel"><div class="filter-bar"><label class="search-field"><svg class="icon"><use href="#i-search"/></svg><input id="request-search" placeholder="搜索请求 ID 或模型名称" aria-label="搜索请求"></label><select id="request-model" aria-label="筛选模型"><option value="">全部模型</option></select><select id="request-status" aria-label="筛选状态"><option value="">全部状态</option><option value="success">成功</option><option value="error">失败</option><option value="cancelled">已取消</option></select><select id="request-protocol" aria-label="筛选协议"><option value="">全部协议</option></select><button class="button" id="requests-export"><svg class="icon"><use href="#i-download"/></svg>导出</button></div><div class="table-scroll"><table><thead><tr><th>请求 ID</th><th>模型 / 协议</th><th>状态</th><th>输入 / 输出 Tokens</th><th>耗时</th><th>请求时间</th></tr></thead><tbody id="requests"></tbody></table></div><div class="pagination"><span id="requests-count">最近 100 条请求内筛选</span><div><button class="button compact" id="requests-prev" aria-label="上一页">←</button><span id="requests-page">1 / 1</span><button class="button compact" id="requests-next" aria-label="下一页">→</button></div></div></article><p class="footnote">日志页展示最近 100 条已完成请求；总览使用所选时段内仍保留的全部元数据。未记录请求正文或密钥内容。</p>
+    </section>
+
+    <section class="view" id="view-keys" aria-label="访问密钥" hidden>
+      <div class="section-toolbar"><span class="section-note" id="keys-summary">为应用分配独立密钥，便于管理访问</span><button class="button primary" id="key-create-open"><svg class="icon"><use href="#i-plus"/></svg>创建密钥</button></div><div id="secret-panel" class="secret-panel" hidden><div><strong>密钥已创建，请立即保存</strong><p>完整密钥仅在本次创建时显示，关闭后无法重新查看。</p><code id="secret"></code></div><div class="button-row"><button class="button" id="secret-copy"><svg class="icon"><use href="#i-copy"/></svg>复制密钥</button><button class="icon-button" id="secret-close" aria-label="隐藏密钥"><svg class="icon"><use href="#i-close"/></svg></button></div></div><article class="panel"><div class="table-scroll"><table><thead><tr><th>密钥名称</th><th>Key ID</th><th>状态</th><th>创建时间</th><th>操作</th></tr></thead><tbody id="keys"></tbody></table></div></article><div class="info-strip"><svg class="icon"><use href="#i-key"/></svg><p>访问密钥用于推理 API。管理密钥用于控制台，两者独立；撤销访问密钥会立即阻止其发起新请求。</p></div>
+    </section>
+
+    <section class="view" id="view-settings" aria-label="系统设置" hidden>
+      <div class="two-column"><article class="panel"><div class="panel-heading"><div><h2>网关配置</h2><p>当前进程的有效配置 · 只读</p></div><span class="pill neutral">只读</span></div><div id="settings-limits" class="padded-content"><div class="inline-empty">连接后查看运行配置</div></div></article><article class="panel"><div class="panel-heading"><div><h2>缓存预算</h2><p>修改 config.toml 并重启后生效</p></div></div><div id="settings-cache" class="padded-content"></div></article></div><article class="panel"><div class="panel-heading"><div><h2>API 接入</h2><p>兼容 OpenAI 与 Anthropic 协议</p></div></div><div class="endpoint-list"><div><span>OpenAI Base URL</span><code id="openai-url"></code><button class="icon-button" data-copy="openai-url" aria-label="复制 OpenAI 地址"><svg class="icon"><use href="#i-copy"/></svg></button></div><div><span>Anthropic Messages</span><code id="anthropic-url"></code><button class="icon-button" data-copy="anthropic-url" aria-label="复制 Anthropic 地址"><svg class="icon"><use href="#i-copy"/></svg></button></div></div></article><article class="panel session-panel"><div><h2>管理会话</h2><p>管理密钥仅保存在当前页面内存，刷新页面后需要重新连接。</p></div><button class="button danger-quiet" id="disconnect">断开管理连接</button></article>
+    </section>
+    <footer class="page-footer"><span><span class="footer-mark">L</span> LiteInfer </span><div><span id="updated-at">尚未同步</span><button class="live-toggle" id="live-toggle" aria-pressed="true"><span class="live-indicator"></span>每 5 秒刷新</button></div></footer>
+  </main>
 </div>
-<div class="row"><button id="model-preview">预览配置</button><button id="model-inspect">校验模型配置</button><button id="model-prepare">下载、转换并自检</button></div>
-<label class="file-label">或选择本地 config.json，仅在浏览器内检查：<input id="model-file" type="file" accept=".json,application/json"></label>
-<pre id="model-info"></pre><p id="model-status" role="status"></p><div id="model-jobs" aria-live="polite"></div>
-<div class="model-grid"><label>已验证产物<select id="model-artifact"><option value="">请选择转换产物</option></select></label><label>本地后端端口<input id="model-port" type="number" min="1" max="65535" value="8081"></label><label>单次输出预算<input id="model-output" type="number" min="1" value="1024"></label></div>
-<div class="row"><button id="model-launch">启动并应用</button><button id="model-stop">停止受管模型</button></div>
-<p id="model-managed"></p><pre id="model-live"></pre>
-</section>
-<section class="panel"><h2>API Key</h2><div class="row"><input id="name" placeholder="新 Key 名称" maxlength="128"><button id="create">创建 Key</button></div><p id="secret"></p><div class="scroll"><table><thead><tr><th>名称</th><th>ID</th><th>状态</th><th>操作</th></tr></thead><tbody id="keys"></tbody></table></div></section>
-<section class="panel"><h2>最近请求</h2><small>仅记录模型、状态、耗时和后端返回的 token 用量。</small><div class="scroll"><table><thead><tr><th>模型</th><th>协议</th><th>状态</th><th>输入</th><th>输出</th><th>耗时</th></tr></thead><tbody id="requests"></tbody></table></div></section>
-<footer><p>OpenAI Base URL：<code>/v1</code> · Anthropic：<code>/v1/messages</code><br>推理速度与模型能力取决于配置的本地后端。</p></footer>
-<script src="/assets/console.js" defer></script><script src="/assets/model-config.js" defer></script><script src="/assets/models.js" defer></script></body></html>
+<dialog id="connect-dialog"><form id="connect-form"><div class="dialog-heading"><span class="dialog-symbol"><svg class="icon"><use href="#i-server"/></svg></span><button class="icon-button" type="button" data-close="connect-dialog" aria-label="关闭"><svg class="icon"><use href="#i-close"/></svg></button></div><h2>连接你的推理工作区</h2><p>输入服务启动时配置或生成的管理密钥。</p><label>管理密钥<input id="admin" type="password" placeholder="LITEINFER_ADMIN_KEY" autocomplete="off" maxlength="512" required></label><p id="connect-error" class="field-error" role="alert"></p><button class="button primary full-width" id="connect-submit" type="submit">连接管理服务 <span>→</span></button><div class="dialog-footnote"><svg class="icon"><use href="#i-key"/></svg>密钥仅保留在页面内存中</div></form></dialog>
+<dialog id="key-dialog"><form id="key-form"><div class="dialog-heading"><span class="dialog-symbol"><svg class="icon"><use href="#i-key"/></svg></span><button class="icon-button" type="button" data-close="key-dialog" aria-label="关闭"><svg class="icon"><use href="#i-close"/></svg></button></div><h2>创建访问密钥</h2><p>用易于识别的名称区分应用和用途。</p><label>密钥名称<input id="name" placeholder="例如：生产应用" maxlength="128" required></label><p id="key-error" class="field-error" role="alert"></p><button class="button primary full-width" id="create" type="submit">创建密钥</button></form></dialog>
+<dialog id="confirm-dialog"><form id="confirm-form"><span class="dialog-symbol warning"><svg class="icon"><use href="#i-info"/></svg></span><h2 id="confirm-title">确认操作</h2><p id="confirm-description"></p><div class="dialog-actions"><button type="button" class="button" id="confirm-cancel">取消</button><button type="submit" class="button danger" id="confirm-accept">确认</button></div></form></dialog>
+<div id="toast" class="toast" role="status" hidden></div>
+<script src="/assets/console-utils.js" defer></script><script src="/assets/console-charts.js" defer></script><script src="/assets/console-overview.js" defer></script><script src="/assets/console-cache.js" defer></script><script src="/assets/console-records.js" defer></script><script src="/assets/console-keys.js" defer></script><script src="/assets/console.js" defer></script><script src="/assets/model-config.js" defer></script><script src="/assets/models.js" defer></script>
+</body></html>

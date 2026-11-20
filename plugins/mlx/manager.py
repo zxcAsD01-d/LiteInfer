@@ -224,6 +224,28 @@ def artifact_path(root: Path, artifact: str) -> Path:
     return directory / "model"
 
 
+def serve_arguments(root: Path, directory: Path, request: dict) -> list[str]:
+    package = Path(__file__).resolve().parent
+    if not (package / "liteinfer_mlx").is_dir():
+        package = package.parents[1] / "backends" / "mlx"
+    os.environ["PYTHONPATH"] = os.pathsep.join(filter(None, (str(package), os.environ.get("PYTHONPATH"))))
+    sys.path.insert(0, str(package))
+    from liteinfer_mlx.cache_settings import CacheConfig
+    config = CacheConfig(**request.get("cache_config", {}))
+    settings = root / "cache-settings.json"
+    temporary = settings.with_suffix(".tmp")
+    temporary.write_text(json.dumps(config.as_dict()))
+    temporary.replace(settings)
+    count = request["concurrency"]
+    return [sys.executable, "-m", "liteinfer_mlx.cached_server", "--model", str(directory),
+            "--cache-config", str(settings), "--cache-directory", str(root / "prompt-cache"),
+            "--host", "127.0.0.1", "--port", str(request["port"]),
+            "--decode-concurrency", str(count), "--prompt-concurrency", str(min(count, 8)),
+            "--prefill-step-size", "2048", "--prompt-cache-size", str(config.memory_max_entries),
+            "--prompt-cache-bytes", str(config.memory_max_bytes),
+            "--temp", "0.7", "--top-k", "64", "--top-p", "0.9", "--log-level", "ERROR"]
+
+
 def main() -> None:
     request = json.load(sys.stdin)
     root = Path(request.pop("root")).resolve()
@@ -241,13 +263,7 @@ def main() -> None:
     elif action == "serve":
         directory = artifact_path(root, request["artifact"])
         adapt_chat_end(directory)
-        count, port = request["concurrency"], request["port"]
-        args = [sys.executable, "-m", "mlx_lm", "server", "--model", str(directory),
-                "--host", "127.0.0.1", "--port", str(port), "--decode-concurrency", str(count),
-                "--prompt-concurrency", str(min(count, 8)), "--prefill-step-size", "2048",
-                "--prompt-cache-size", "64", "--prompt-cache-bytes", "2147483648",
-                "--temp", "0.7", "--top-k", "64", "--top-p", "0.9",
-                "--log-level", "ERROR"]
+        args = serve_arguments(root, directory, request)
         os.execv(sys.executable, args)
     else:
         raise ModelError("invalid_action")

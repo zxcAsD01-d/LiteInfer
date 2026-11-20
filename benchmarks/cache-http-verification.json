@@ -1,0 +1,177 @@
+{
+  "model": "Qwen3.5-0.8B-OptiQ-4bit",
+  "requests": 7,
+  "tenant_isolation": true,
+  "seeded_reuse": true,
+  "equivalent_answers": true,
+  "ssd_restore": true,
+  "restart_restore": true,
+  "admin_authentication": true,
+  "clear": true,
+  "stats": {
+    "requests": 4,
+    "hits": 2,
+    "misses": 2,
+    "memory_hits": 1,
+    "ssd_hits": 1,
+    "exact_hits": 0,
+    "prefix_hits": 2,
+    "input_tokens": 1096,
+    "saved_tokens": 546,
+    "evictions": 6,
+    "entries": 2,
+    "bytes": 45895680,
+    "hit_rate": 0.5,
+    "token_hit_rate": 0.4981751824817518,
+    "lookup_latency": {
+      "samples": 4,
+      "p50_ms": 0.2731669956119731,
+      "p95_ms": 14.854000000923406
+    },
+    "index": {
+      "entries": 2,
+      "scopes": 1,
+      "nodes": 3,
+      "edge_tokens": 282,
+      "lookups": 4,
+      "last_nodes_visited": 0,
+      "mean_nodes_visited": 0.5
+    },
+    "ssd": {
+      "hits": 1,
+      "misses": 3,
+      "writes": 6,
+      "evictions": 0,
+      "expirations": 0,
+      "read_errors": 0,
+      "write_errors": 0,
+      "queue_drops": 0,
+      "admission_skips": 0,
+      "entries": 6,
+      "bytes": 137553864,
+      "max_bytes": 536870912,
+      "pending_writes": 0,
+      "pending_bytes": 0,
+      "hit_rate": 0.25,
+      "read_latency": {
+        "samples": 1,
+        "p50_ms": 12.869917001808062,
+        "p95_ms": 12.869917001808062
+      },
+      "write_latency": {
+        "samples": 6,
+        "p50_ms": 23.65799999824958,
+        "p95_ms": 27.77929199510254
+      },
+      "index": {
+        "entries": 6,
+        "scopes": 2,
+        "nodes": 8,
+        "edge_tokens": 564,
+        "lookups": 10,
+        "last_nodes_visited": 3,
+        "mean_nodes_visited": 0.9
+      }
+    },
+    "settings": {
+      "memory_max_entries": 2,
+      "memory_max_bytes": 2147483648,
+      "ssd_max_entries": 512,
+      "ssd_max_bytes": 536870912,
+      "ttl_seconds": 3600,
+      "min_tokens": 1,
+      "write_queue_entries": 2,
+      "write_queue_bytes": 268435456
+    },
+    "analysis": [
+      "请求样本不足 100，命中率暂不代表稳定工作负载",
+      "内存发生淘汰并存在未命中，可结合 SSD 命中率评估容量"
+    ]
+  },
+  "after_restart": {
+    "requests": 1,
+    "hits": 1,
+    "misses": 0,
+    "memory_hits": 0,
+    "ssd_hits": 1,
+    "exact_hits": 0,
+    "prefix_hits": 1,
+    "input_tokens": 274,
+    "saved_tokens": 273,
+    "evictions": 0,
+    "entries": 2,
+    "bytes": 45895680,
+    "hit_rate": 1.0,
+    "token_hit_rate": 0.9963503649635036,
+    "lookup_latency": {
+      "samples": 1,
+      "p50_ms": 15.977417002432048,
+      "p95_ms": 15.977417002432048
+    },
+    "index": {
+      "entries": 2,
+      "scopes": 1,
+      "nodes": 3,
+      "edge_tokens": 282,
+      "lookups": 1,
+      "last_nodes_visited": 0,
+      "mean_nodes_visited": 0.0
+    },
+    "ssd": {
+      "hits": 1,
+      "misses": 0,
+      "writes": 0,
+      "evictions": 0,
+      "expirations": 0,
+      "read_errors": 0,
+      "write_errors": 0,
+      "queue_drops": 0,
+      "admission_skips": 0,
+      "entries": 8,
+      "bytes": 189229676,
+      "max_bytes": 536870912,
+      "pending_writes": 0,
+      "pending_bytes": 0,
+      "hit_rate": 1.0,
+      "read_latency": {
+        "samples": 1,
+        "p50_ms": 13.830500000040047,
+        "p95_ms": 13.830500000040047
+      },
+      "write_latency": {
+        "samples": 0,
+        "p50_ms": 0.0,
+        "p95_ms": 0.0
+      },
+      "index": {
+        "entries": 8,
+        "scopes": 3,
+        "nodes": 11,
+        "edge_tokens": 846,
+        "lookups": 1,
+        "last_nodes_visited": 3,
+        "mean_nodes_visited": 3.0
+      }
+    },
+    "settings": {
+      "memory_max_entries": 2,
+      "memory_max_bytes": 2147483648,
+      "ssd_max_entries": 512,
+      "ssd_max_bytes": 536870912,
+      "ttl_seconds": 3600,
+      "min_tokens": 1,
+      "write_queue_entries": 2,
+      "write_queue_bytes": 268435456
+    },
+    "analysis": [
+      "请求样本不足 100，命中率暂不代表稳定工作负载"
+    ]
+  },
+  "http_ms": {
+    "cold": 1777.6479999956791,
+    "warm": 129.61491600435693,
+    "ssd": 96.12316700076917,
+    "restart": 901.2246669954038
+  },
+  "timing_scope": "one smoke request per path; includes HTTP and generation, not a latency benchmark"
+}

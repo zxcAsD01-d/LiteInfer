@@ -8,10 +8,56 @@ use axum::{
     Json,
     body::Bytes,
     extract::{State, rejection::BytesRejection},
-    http::HeaderMap,
+    http::{HeaderMap, Method, StatusCode},
 };
 use serde_json::{Value, json};
 use std::sync::Arc;
+
+pub async fn cache(
+    State(state): State<Arc<AppState>>,
+    headers: HeaderMap,
+    method: Method,
+) -> Result<Json<Value>, ApiError> {
+    state.admin(&headers)?;
+    let alias = state
+        .deployment
+        .managed
+        .try_lock()
+        .map_err(|_| ApiError::new(StatusCode::CONFLICT, "受管模型正在启动或停止"))?
+        .as_ref()
+        .map(|process| process.alias.clone())
+        .ok_or_else(|| ApiError::bad("当前没有运行中的受管 MLX 模型"))?;
+    let model = state.registry.get(&alias)?;
+    let url = cache_url(&model)?;
+    let response = state
+        .client
+        .request(method, url)
+        .bearer_auth(&state.deployment.cache_admin_token)
+        .timeout(std::time::Duration::from_secs(10))
+        .send()
+        .await
+        .map_err(|_| ApiError::new(StatusCode::BAD_GATEWAY, "缓存管理后端不可用"))?;
+    if !response.status().is_success() {
+        return Err(ApiError::new(
+            StatusCode::BAD_GATEWAY,
+            "后端拒绝缓存管理请求",
+        ));
+    }
+    Ok(Json(response.json().await.map_err(|_| {
+        ApiError::new(StatusCode::BAD_GATEWAY, "缓存统计响应无效")
+    })?))
+}
+
+fn cache_url(model: &Model) -> Result<reqwest::Url, ApiError> {
+    let mut url =
+        reqwest::Url::parse(&model.base_url).map_err(|_| ApiError::bad("后端地址无效"))?;
+    if url.scheme() != "http" || url.host_str() != Some("127.0.0.1") {
+        return Err(ApiError::bad("缓存管理仅支持受管本机后端"));
+    }
+    url.set_path("/cache/stats");
+    url.set_query(None);
+    Ok(url)
+}
 
 pub async fn status(
     State(state): State<Arc<AppState>>,

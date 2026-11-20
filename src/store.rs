@@ -1,4 +1,5 @@
 use rand::RngCore;
+pub mod analytics;
 use rusqlite::{Connection, params};
 use serde::Serialize;
 use sha2::{Digest, Sha256};
@@ -7,6 +8,8 @@ use std::{
     path::{Path, PathBuf},
     time::{SystemTime, UNIX_EPOCH},
 };
+
+pub const REQUEST_RETENTION: usize = 10000;
 
 pub fn timestamp() -> f64 {
     SystemTime::now()
@@ -49,6 +52,10 @@ pub struct RequestRecord {
     pub completion_tokens: u64,
     pub duration_ms: u64,
     pub created: f64,
+    pub finished_at: Option<f64>,
+    pub cached_prompt_tokens: Option<u64>,
+    pub first_output_ms: Option<f64>,
+    pub output_tokens_per_second: Option<f64>,
 }
 
 impl Store {
@@ -58,11 +65,12 @@ impl Store {
                 .map_err(|e| rusqlite::Error::ToSqlConversionFailure(Box::new(e)))?;
         }
         let store = Self { path: path.into() };
-        let db = store.connect()?;
+        let mut db = store.connect()?;
         db.execute_batch("PRAGMA journal_mode=WAL;
             CREATE TABLE IF NOT EXISTS keys(id TEXT PRIMARY KEY,name TEXT NOT NULL,hash TEXT UNIQUE NOT NULL,created REAL NOT NULL,revoked INTEGER NOT NULL DEFAULT 0);
             CREATE TABLE IF NOT EXISTS requests(id TEXT PRIMARY KEY,key_id TEXT,model TEXT,protocol TEXT,status INTEGER,prompt_tokens INTEGER,completion_tokens INTEGER,duration_ms INTEGER,created REAL);
             CREATE INDEX IF NOT EXISTS requests_created ON requests(created);")?;
+        migrate_request_metrics(&mut db)?;
         #[cfg(unix)]
         {
             use std::os::unix::fs::PermissionsExt;
@@ -133,8 +141,12 @@ impl Store {
         records: &[RequestRecord],
     ) -> Result<(), rusqlite::Error> {
         let transaction = db.transaction()?;
-        let mut statement = transaction
-            .prepare_cached("INSERT INTO requests VALUES(?1,?2,?3,?4,?5,?6,?7,?8,?9)")?;
+        let mut statement = transaction.prepare_cached(
+            "INSERT INTO requests
+            (id,key_id,model,protocol,status,prompt_tokens,completion_tokens,duration_ms,created,
+            finished_at,cached_prompt_tokens,first_output_ms,output_tokens_per_second)
+            VALUES(?1,?2,?3,?4,?5,?6,?7,?8,?9,?10,?11,?12,?13)",
+        )?;
         for record in records {
             statement.execute(params![
                 record.id,
@@ -145,7 +157,11 @@ impl Store {
                 record.prompt_tokens,
                 record.completion_tokens,
                 record.duration_ms,
-                record.created
+                record.created,
+                record.finished_at,
+                record.cached_prompt_tokens,
+                record.first_output_ms,
+                record.output_tokens_per_second
             ])?;
         }
         drop(statement);
@@ -155,25 +171,39 @@ impl Store {
     pub fn recent(&self) -> Result<Vec<RequestRecord>, rusqlite::Error> {
         let db = self.connect()?;
         let mut statement = db.prepare("SELECT * FROM requests ORDER BY created DESC LIMIT 100")?;
-        statement
-            .query_map([], |r| {
-                Ok(RequestRecord {
-                    id: r.get(0)?,
-                    key_id: r.get(1)?,
-                    model: r.get(2)?,
-                    protocol: r.get(3)?,
-                    status: r.get(4)?,
-                    prompt_tokens: r.get(5)?,
-                    completion_tokens: r.get(6)?,
-                    duration_ms: r.get(7)?,
-                    created: r.get(8)?,
-                })
-            })?
-            .collect()
+        statement.query_map([], analytics::read_record)?.collect()
     }
 
     pub fn prune(&self) -> Result<(), rusqlite::Error> {
-        self.connect()?.execute("DELETE FROM requests WHERE id IN (SELECT id FROM requests ORDER BY created DESC LIMIT -1 OFFSET 10000)", [])?;
+        self.connect()?.execute("DELETE FROM requests WHERE id IN (SELECT id FROM requests ORDER BY created DESC LIMIT -1 OFFSET ?1)", [REQUEST_RETENTION])?;
         Ok(())
     }
+}
+
+fn migrate_request_metrics(db: &mut Connection) -> Result<(), rusqlite::Error> {
+    let tx = db.transaction_with_behavior(rusqlite::TransactionBehavior::Immediate)?;
+    let columns = {
+        let mut query = tx.prepare("PRAGMA table_info(requests)")?;
+        query
+            .query_map([], |row| row.get::<_, String>(1))?
+            .collect::<Result<Vec<_>, _>>()?
+    };
+    for (column, kind) in [
+        ("finished_at", "REAL"),
+        ("cached_prompt_tokens", "INTEGER"),
+        ("first_output_ms", "REAL"),
+        ("output_tokens_per_second", "REAL"),
+    ] {
+        if !columns.iter().any(|name| name == column) {
+            tx.execute(
+                &format!("ALTER TABLE requests ADD COLUMN {column} {kind}"),
+                [],
+            )?;
+        }
+    }
+    tx.execute(
+        "CREATE INDEX IF NOT EXISTS requests_finished ON requests(COALESCE(finished_at, created))",
+        [],
+    )?;
+    tx.commit()
 }

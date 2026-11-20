@@ -7,7 +7,7 @@ import unittest
 from unittest.mock import patch
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-from manager import DEFAULT_ALIAS, adapt_chat_end, download, is_mlx_artifact, precision_options, validate_source
+from manager import DEFAULT_ALIAS, adapt_chat_end, download, is_mlx_artifact, precision_options, serve_arguments, validate_source
 from model_config import ModelError, metadata, validate_weights
 
 
@@ -21,6 +21,17 @@ def fixture(directory: Path):
 
 
 class ConfigTests(unittest.TestCase):
+    def test_managed_server_uses_packaged_ssd_adapter_and_config(self):
+        with tempfile.TemporaryDirectory() as root:
+            request = {"port": 8081, "concurrency": 3,
+                       "cache_config": {"memory_max_entries": 8, "ssd_max_bytes": 1024**3}}
+            with patch.dict("os.environ"):
+                command = serve_arguments(Path(root), Path(root) / "model", request)
+            self.assertEqual(command[2], "liteinfer_mlx.cached_server")
+            settings = json.loads((Path(root) / "cache-settings.json").read_text())
+            self.assertEqual(settings["ssd_max_bytes"], 1024**3)
+            self.assertEqual(command[command.index("--prompt-cache-size") + 1], "8")
+
     def test_default_model_alias(self):
         self.assertEqual(DEFAULT_ALIAS, "qwen3.5-0.8b")
 

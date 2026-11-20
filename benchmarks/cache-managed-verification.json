@@ -1,0 +1,92 @@
+{
+  "managed_launch": true,
+  "embedded_modules": true,
+  "gateway_cache_admin": true,
+  "trusted_key_namespace": true,
+  "equal_answers": true,
+  "clear": true,
+  "cache": {
+    "requests": 2,
+    "hits": 1,
+    "misses": 1,
+    "memory_hits": 1,
+    "ssd_hits": 0,
+    "exact_hits": 0,
+    "prefix_hits": 1,
+    "input_tokens": 542,
+    "saved_tokens": 270,
+    "evictions": 1,
+    "entries": 2,
+    "bytes": 45821952,
+    "hit_rate": 0.5,
+    "token_hit_rate": 0.4981549815498155,
+    "lookup_latency": {
+      "samples": 2,
+      "p50_ms": 0.2892499978770502,
+      "p95_ms": 0.2892499978770502
+    },
+    "index": {
+      "entries": 2,
+      "scopes": 1,
+      "nodes": 3,
+      "edge_tokens": 279,
+      "lookups": 2,
+      "last_nodes_visited": 2,
+      "mean_nodes_visited": 1.0,
+      "lookup_p50_us": 16.917,
+      "lookup_p95_us": 16.917
+    },
+    "ssd": {
+      "hits": 0,
+      "misses": 2,
+      "writes": 3,
+      "evictions": 0,
+      "expirations": 0,
+      "read_errors": 0,
+      "write_errors": 0,
+      "queue_drops": 0,
+      "admission_skips": 0,
+      "entries": 3,
+      "bytes": 68666340,
+      "max_bytes": 536870912,
+      "pending_writes": 0,
+      "pending_bytes": 0,
+      "hit_rate": 0.0,
+      "read_latency": {
+        "samples": 0,
+        "p50_ms": 0.0,
+        "p95_ms": 0.0
+      },
+      "write_latency": {
+        "samples": 3,
+        "p50_ms": 26.643750003131572,
+        "p95_ms": 35.67300000577234
+      },
+      "index": {
+        "entries": 3,
+        "scopes": 1,
+        "nodes": 4,
+        "edge_tokens": 279,
+        "lookups": 5,
+        "last_nodes_visited": 2,
+        "mean_nodes_visited": 0.8,
+        "lookup_p50_us": 1.167,
+        "lookup_p95_us": 16.083
+      }
+    },
+    "settings": {
+      "memory_max_entries": 2,
+      "memory_max_bytes": 2147483648,
+      "ssd_max_entries": 512,
+      "ssd_max_bytes": 536870912,
+      "ttl_seconds": 3600,
+      "min_tokens": 1,
+      "write_queue_entries": 2,
+      "write_queue_bytes": 268435456
+    },
+    "analysis": [
+      "请求样本不足 100，命中率暂不代表稳定工作负载",
+      "内存发生淘汰并存在未命中，可结合 SSD 命中率评估容量"
+    ]
+  }
+}

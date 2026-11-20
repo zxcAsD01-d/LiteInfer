@@ -26,6 +26,35 @@ pub struct MlxConfig {
     pub python: String,
     pub directory: String,
     pub task_timeout_seconds: u64,
+    pub cache: MlxCacheConfig,
+}
+
+#[derive(Clone, Debug, Deserialize, Serialize)]
+#[serde(default, deny_unknown_fields)]
+pub struct MlxCacheConfig {
+    pub memory_max_entries: usize,
+    pub memory_max_bytes: usize,
+    pub ssd_max_entries: usize,
+    pub ssd_max_bytes: usize,
+    pub ttl_seconds: u64,
+    pub min_tokens: usize,
+    pub write_queue_entries: usize,
+    pub write_queue_bytes: usize,
+}
+
+impl Default for MlxCacheConfig {
+    fn default() -> Self {
+        Self {
+            memory_max_entries: 64,
+            memory_max_bytes: 2 * 1024 * 1024 * 1024,
+            ssd_max_entries: 512,
+            ssd_max_bytes: 0,
+            ttl_seconds: 3600,
+            min_tokens: 128,
+            write_queue_entries: 2,
+            write_queue_bytes: 256 * 1024 * 1024,
+        }
+    }
 }
 
 impl Default for MlxConfig {
@@ -34,6 +63,7 @@ impl Default for MlxConfig {
             python: "python3".into(),
             directory: ".liteinfer/mlx".into(),
             task_timeout_seconds: 7200,
+            cache: MlxCacheConfig::default(),
         }
     }
 }
@@ -108,6 +138,15 @@ impl Config {
             || self.mlx.task_timeout_seconds == 0
         {
             return Err("MLX Python、目录和任务超时配置无效".into());
+        }
+        let cache = &self.mlx.cache;
+        if cache.ssd_max_bytes > 0
+            && (cache.ssd_max_entries == 0
+                || cache.ttl_seconds == 0
+                || cache.write_queue_entries == 0
+                || cache.write_queue_bytes == 0)
+        {
+            return Err("启用 SSD 缓存时，条目、TTL 和写入队列预算必须大于 0".into());
         }
         let mut ids = HashSet::new();
         for model in &self.models {

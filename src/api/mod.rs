@@ -2,6 +2,7 @@ mod admin;
 pub mod anthropic;
 mod decisions;
 pub mod models;
+mod monitoring;
 pub mod proxy;
 
 use crate::{error::ApiError, state::AppState};
@@ -23,6 +24,7 @@ pub fn router(state: Arc<AppState>) -> Router {
     Router::new()
         .route("/",get(|| async {Html(include_str!("../../assets/console.html"))}))
         .route("/assets/console.js", get(||async {([("content-type","text/javascript; charset=utf-8")],include_str!("../../assets/console.js"))}))
+        .route("/assets/{script}", get(console_script))
         .route("/assets/console.css", get(||async {([("content-type","text/css; charset=utf-8")],include_str!("../../assets/console.css"))}))
         .route("/assets/model-config.js", get(||async {([("content-type","text/javascript; charset=utf-8")],include_str!("../../assets/model-config.js"))}))
         .route("/assets/models.js", get(||async {([("content-type","text/javascript; charset=utf-8")],include_str!("../../assets/models.js"))}))
@@ -34,6 +36,8 @@ pub fn router(state: Arc<AppState>) -> Router {
         .route("/v1/messages",post(messages))
         .route("/v1/messages/count_tokens",post(count_tokens))
         .route("/admin/metrics",get(admin::metrics))
+        .route("/admin/overview",get(monitoring::overview))
+        .route("/admin/system",get(monitoring::system))
         .route("/admin/requests",get(admin::requests))
         .route("/admin/keys",get(admin::keys).post(admin::create_key))
         .route("/admin/keys/{id}",delete(admin::revoke_key))
@@ -44,10 +48,24 @@ pub fn router(state: Arc<AppState>) -> Router {
         .route("/admin/mlx/prepare", post(models::prepare))
         .route("/admin/mlx/launch", post(models::launch))
         .route("/admin/mlx/stop", post(models::stop))
+        .route("/admin/mlx/cache", get(models::cache).delete(models::cache))
         .fallback(|| async { ApiError::new(StatusCode::NOT_FOUND,"接口不存在") })
         .layer(DefaultBodyLimit::max(maximum))
         .layer(middleware::from_fn_with_state(state.clone(), response_headers))
         .with_state(state)
+}
+
+async fn console_script(axum::extract::Path(script): axum::extract::Path<String>) -> Response {
+    let source = match script.as_str() {
+        "console-utils.js" => include_str!("../../assets/console-utils.js"),
+        "console-charts.js" => include_str!("../../assets/console-charts.js"),
+        "console-overview.js" => include_str!("../../assets/console-overview.js"),
+        "console-cache.js" => include_str!("../../assets/console-cache.js"),
+        "console-records.js" => include_str!("../../assets/console-records.js"),
+        "console-keys.js" => include_str!("../../assets/console-keys.js"),
+        _ => return ApiError::new(StatusCode::NOT_FOUND, "资源不存在").into_response(),
+    };
+    ([("content-type", "text/javascript; charset=utf-8")], source).into_response()
 }
 
 async fn response_headers(
@@ -56,6 +74,7 @@ async fn response_headers(
     next: Next,
 ) -> Response {
     let anthropic = request.uri().path().starts_with("/v1/messages");
+    let administrative = request.uri().path().starts_with("/admin/");
     let permit = match state.ingress.clone().try_acquire_owned() {
         Ok(permit) => permit,
         Err(_) => {
@@ -69,6 +88,12 @@ async fn response_headers(
     };
     let mut response = next.run(request).await;
     let headers = response.headers_mut();
+    if administrative {
+        headers.insert(
+            "cache-control",
+            axum::http::HeaderValue::from_static("no-store"),
+        );
+    }
     headers.insert(
         "x-content-type-options",
         "nosniff".parse().expect("constant"),

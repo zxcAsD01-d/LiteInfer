@@ -3,6 +3,9 @@
 | 文档 | 内容 |
 | --- | --- |
 | [快速开始](../README.md) | 构建、启动、两种协议、控制台 |
+| [macOS 安装与升级](install-macos.md) | Apple Silicon 安装包、校验和迁移 |
+| [运行控制台](console-design.md) | 页面设计、推理统计与设备指标口径 |
+| [内存与 SSD 分层缓存](ssd-cache.md) | 缓存配置、索引、延迟与隐私边界 |
 | [配置与后端](configuration.md) | 参数、模型注册、MLX / llama.cpp / Ollama / LM Studio |
 | [协议兼容](compatibility.md) | 字段、工具、流式事件、已知边界 |
 | [架构与调度](architecture.md) | Rust 模块、并发、取消、缓存与 usage |

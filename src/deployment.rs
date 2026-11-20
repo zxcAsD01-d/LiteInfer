@@ -136,6 +136,7 @@ pub struct Managed {
 pub struct Deployment {
     pub config: MlxConfig,
     pub root: PathBuf,
+    pub cache_admin_token: String,
     pub jobs: Mutex<Vec<Job>>,
     pub permit: Arc<Semaphore>,
     pub managed: AsyncMutex<Option<Managed>>,
@@ -149,6 +150,7 @@ impl Deployment {
     pub fn new(config: MlxConfig) -> Self {
         Self {
             root: PathBuf::from(&config.directory),
+            cache_admin_token: uuid::Uuid::new_v4().simple().to_string(),
             config,
             jobs: Mutex::new(Vec::new()),
             permit: Arc::new(Semaphore::new(1)),

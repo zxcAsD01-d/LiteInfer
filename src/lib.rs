@@ -7,3 +7,4 @@ pub mod scheduler;
 pub mod sse;
 pub mod state;
 pub mod store;
+pub mod telemetry;

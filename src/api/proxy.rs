@@ -84,6 +84,8 @@ pub fn prepare(
     }
     normalize_budget(object, model.max_output_tokens)?;
     if let Some(parameter) = &model.cache_isolation_parameter {
+        object.remove("cache_salt");
+        object.remove("prompt_cache_key");
         object.insert(parameter.clone(), json!(store::hash(key)));
     }
     object.insert("model".into(), json!(model.upstream_model));
@@ -323,8 +325,29 @@ struct StreamState {
     include_usage: bool,
 }
 
+fn has_stream_output(choices: &[Value]) -> bool {
+    let nonempty = |field: &Value| field.as_str().is_some_and(|text| !text.is_empty());
+    choices.iter().any(|choice| {
+        let delta = &choice["delta"];
+        nonempty(&choice["text"])
+            || ["content", "reasoning", "reasoning_content"]
+                .iter()
+                .any(|field| nonempty(&delta[field]))
+            || delta["tool_calls"].as_array().is_some_and(|calls| {
+                calls
+                    .iter()
+                    .any(|call| nonempty(&call["function"]["arguments"]))
+            })
+    })
+}
+
 impl StreamState {
-    fn frame(&mut self, frame: sse::Frame, lease: &mut Lease) -> Result<Vec<Bytes>, ApiError> {
+    fn frame(
+        &mut self,
+        frame: sse::Frame,
+        lease: &mut Lease,
+        received: std::time::Instant,
+    ) -> Result<Vec<Bytes>, ApiError> {
         if frame.data == "[DONE]" {
             if !self.finished || !self.usage {
                 return Err(ApiError::new(
@@ -339,12 +362,12 @@ impl StreamState {
         }
         let mut payload: Value = serde_json::from_str(&frame.data)
             .map_err(|_| ApiError::new(StatusCode::BAD_GATEWAY, "后端 SSE JSON 无效"))?;
-        if !payload.is_object() || !payload["choices"].is_array() {
+        let Some(choices) = payload["choices"].as_array() else {
             return Err(ApiError::new(
                 StatusCode::BAD_GATEWAY,
                 "后端 SSE 缺少 choices 数组",
             ));
-        }
+        };
         if payload.get("error").is_some() {
             return Err(ApiError::new(StatusCode::BAD_GATEWAY, "后端流返回错误"));
         }
@@ -353,9 +376,10 @@ impl StreamState {
             self.usage = true;
             lease.usage(&payload["usage"]);
         }
-        self.finished |= payload["choices"]
-            .as_array()
-            .is_some_and(|choices| choices.iter().any(|c| c["finish_reason"].is_string()));
+        if has_stream_output(choices) {
+            lease.observe_output(received);
+        }
+        self.finished |= choices.iter().any(|c| c["finish_reason"].is_string());
         if let Some(translator) = &mut self.translator {
             return translator.push(&payload);
         }
@@ -393,6 +417,7 @@ fn upstream_events(
                 Ok(Some(Err(_))) => break ApiError::new(StatusCode::BAD_GATEWAY,"后端流连接中断"),
                 Err(_) => break ApiError::new(StatusCode::GATEWAY_TIMEOUT,"后端流超时"),
             };
+            let arrival = std::time::Instant::now();
             received += chunk.len();
             if received > limit { break ApiError::new(StatusCode::BAD_GATEWAY,"后端流超过大小预算"); }
             let frames = match decoder.feed(&chunk, limit.min(1024*1024)) {
@@ -400,7 +425,7 @@ fn upstream_events(
             };
             for frame in frames {
                 let done = frame.data == "[DONE]";
-                match state.frame(frame,&mut lease) {
+                match state.frame(frame,&mut lease,arrival) {
                     Ok(events) => { for event in events { yield Ok(event); } },
                     Err(error) => break 'receive error,
                 }

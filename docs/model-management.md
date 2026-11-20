@@ -67,7 +67,7 @@ flowchart TD
 - 网关退出会终止受管后端；转换或插件调用超时会结束子进程。第三方异常正文可能包含本机路径或源令牌，因此网页只显示阶段和错误代码。
 - `POST /admin/models` 可注册其他已运行后端并写入数据库旁的 `*.models.json`，立即应用，重启后重新读取；该功能不会验证远端模型回答质量。
 
-这套受管 HTTP 后端使用固定版本 MLX-LM server 的连续批处理、预填充和前缀缓存。上一轮公开的 `backends/mlx` 自定义 BatchEngine、编译采样和投影融合保持独立可选组件，不声称已自动注入 MLX-LM server。
+这套受管 HTTP 后端使用固定版本 MLX-LM server 的连续批处理与预填充，通过本项目适配器接入按 Key 隔离的压缩前缀索引和可选 SSD 缓存，见[分层缓存配置与分析](ssd-cache.md)。`backends/mlx` 自定义 BatchEngine、编译采样和投影融合保持独立可选组件。
 
 ## 运行配置
 
@@ -94,3 +94,5 @@ task_timeout_seconds = 7200
 | POST `/admin/mlx/prepare` | 异步下载、转换、自检 |
 | POST `/admin/mlx/launch` | 启动产物并注册 `{artifact,alias,port,max_output_tokens}` |
 | POST `/admin/mlx/stop` | 停止受管模型 |
+| GET `/admin/mlx/cache` | 受管模型的缓存命中率、索引和读写延迟分析 |
+| DELETE `/admin/mlx/cache` | 清理内存与 SSD 缓存，使已排队的旧写入失效 |

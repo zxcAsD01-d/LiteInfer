@@ -40,7 +40,7 @@ flowchart TD
 
 ## 缓存与性能边界
 
-共享连接池减少连接建立开销；Rust不缓存采样结果，不重用其他用户的模型输出。KV 缓存、连续批处理、量化和模型常驻由后端实现；仓库提供可选的 backends/mlx 组件作为其中一种接入方式，详见 [MLX 推理优化](mlx-optimization.md)。配置 `cache_isolation_parameter` 可覆盖客户端提供的 `cache_salt` 或 `prompt_cache_key`，值为 Key ID 摘要；只在后端明确支持时启用。未启用此参数时，后端是否跨用户复用前缀由其自身决定，不能声称已强隔离。
+共享连接池减少连接建立开销；Rust不缓存采样结果，不重用其他用户的模型输出。KV 缓存、连续批处理、量化和模型常驻由后端实现；仓库提供可选的 backends/mlx 组件，详见 [MLX 推理优化](mlx-optimization.md)。受管 MLX HTTP 服务另通过适配器接入[分层缓存](ssd-cache.md)，自动使用可信 `cache_salt` 隔离模型状态。对于外部后端，配置 `cache_isolation_parameter` 会移除客户端提供的两类隔离字段并注入 Key ID 摘要；只在后端明确支持时启用。未启用时，是否跨用户复用前缀由后端自身决定。
 
 3 路请求的吞吐不会必然等于单路吞吐之和。共享 GPU 的计算、带宽和 KV 内存构成总预算；调度目标是约束资源、减少闲置并公平完成请求。调整后端批处理、预填充块和缓存预算比增加 HTTP 并发更能影响 token/s。
 

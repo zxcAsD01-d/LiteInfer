@@ -1,4 +1,4 @@
-# LiteInfer 0.2.0
+# LiteInfer 0.3.0
 
 **为 macOS 本地模型提供轻量、可观测的 Rust API 服务。**
 
@@ -136,6 +136,7 @@ curl http://127.0.0.1:8787/v1/decisions \
 - [文档导航](docs/README.md)：配置、后端、部署、架构、协议与迁移。
 - [网页模型管理](docs/model-management.md)：纯前端配置校验、下载源、MLX 转换、自检、启动与恢复。
 - [Valen MLX 实验](docs/valen-mlx.md)：原生权重转换、BF16/q8/q4 对照、自定义 Metal 算子及 M1 Pro 实测边界。
+- [Qwen3.5 small-M 实验与性能分析](docs/qwen35-performance-analysis.md)：M1 Pro 单发 151.3、8 发合计 442.8 解码 token/s；显式实验选项，含数值差异、理论估算和复现方法。
 - [压测方法与结果](docs/testing.md)：区分模拟服务开销和真实模型推理；不把模拟 token 当成模型吞吐。
 - [安全与隐私](SECURITY.md)：公开内容、密钥、日志与部署边界。
 - [贡献指南](CONTRIBUTING.md)：检查命令和代码原则。

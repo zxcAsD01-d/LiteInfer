@@ -1,0 +1,411 @@
+{
+  "date": "2026-11-20",
+  "timezone": "Asia/Shanghai",
+  "classification": "Analytical bandwidth model plus local MLX benchmark; NOT a measured vLLM speed comparison",
+  "hardware": {
+    "chip": "Apple M1 Pro",
+    "gpu_cores": 14,
+    "unified_memory_gib": 16,
+    "nominal_shared_memory_bandwidth_gb_per_second": 200
+  },
+  "model": "mlx-community/Qwen3.5-0.8B-OptiQ-4bit",
+  "provenance": {
+    "revision": "3b1584b230cace57814b529694741fefbd82e530",
+    "config_sha256": "52e13b83fcaf6ffb364f8d782a3a92d3c7ce2d5e78e459f082500cc3521452cf",
+    "header_sha256": "32a24e361ad9b3d1e81dcdc97b8b60ad2a7fa68049d001d27ea4b599825cfba4",
+    "header_size": 88668
+  },
+  "method": {
+    "prompt_tokens": 128,
+    "generation_tokens": 64,
+    "warmup_runs_per_batch": 1,
+    "timing_trials_per_batch": 3,
+    "batch_order": [
+      1,
+      3,
+      6,
+      8
+    ],
+    "seed": 0,
+    "sampling": "greedy",
+    "eos_stopping": false,
+    "prefill_step_size": 2048,
+    "scope": "mlx_lm.benchmark generation_tps; excludes HTTP and prompt time",
+    "desktop_load_controlled": false,
+    "power_and_thermal_state_recorded": false,
+    "weights_fully_hashed": false,
+    "local_config_and_header_match_pinned_remote": true
+  },
+  "assumptions": [
+    "Each decode batch loads every text weight and quantization auxiliary exactly once from shared memory.",
+    "Each request reads and writes one FP32 GDN state and BF16 convolution state per linear layer.",
+    "Attention reads each active BF16 KV element once per layer, reusing it across grouped query heads.",
+    "Mean active KV length is approximated by 128 + (64 - 1) / 2 = 159.5 tokens.",
+    "No cross-step persistence of weight or recurrent-state arrays in on-chip caches is modeled.",
+    "Temporary activations, dequantization, reductions, CPU dispatch and synchronization costs are omitted.",
+    "200 GB/s is advertised shared bandwidth, not a measured sustained GPU read bandwidth.",
+    "This conditional traffic model is not an absolute hardware limit or a promise of achievable throughput."
+  ],
+  "formulas": {
+    "aggregate_bandwidth_roof": "BW * B / (W + B * D(L))",
+    "request_traffic": "D(L) = 2*S_gdn + 2*S_conv + KV_bytes_per_token*(L+1) + embedding_row_bytes",
+    "combined_roof": "min(aggregate_bandwidth_roof, effective_compute_flops_per_second / decode_flops_per_token)",
+    "decode_flops_per_token": "1503789056 + approximately 33030144 + 49152*L; excludes scalar nonlinear and quantization work"
+  },
+  "roofline": {
+    "weight_bytes": 650168512,
+    "embedding_bytes": 270172160,
+    "matmul_parameters": {
+      "embedding_logits": 254279680,
+      "other_matrices": 497614848
+    },
+    "gdn_state_bytes_per_sequence": 18874368,
+    "conv_state_bytes_per_sequence": 663552,
+    "kv_bytes_per_cached_token_per_sequence": 12288,
+    "assumed_mean_kv_length": 159.5,
+    "per_sequence_traffic_bytes": 41049152.0,
+    "bandwidth_bytes_per_second": 200000000000.0,
+    "weight_only_single_roof_tps": 307.6125593729153,
+    "rows": [
+      {
+        "batch": 1,
+        "historical_tps": 135.49,
+        "per_request_tps": 135.49,
+        "model_roof_tps": 289.3444574934937,
+        "attainment": 0.46826540647680004,
+        "step_ms": 7.38061849582995,
+        "ideal_step_ms": 3.45608832
+      },
+      {
+        "batch": 3,
+        "historical_tps": 235.034,
+        "per_request_tps": 78.34466666666667,
+        "model_roof_tps": 775.8794914732706,
+        "attainment": 0.3029259087048533,
+        "step_ms": 12.764110724405832,
+        "ideal_step_ms": 3.86657984
+      },
+      {
+        "batch": 6,
+        "historical_tps": 276.091,
+        "per_request_tps": 46.015166666666666,
+        "model_roof_tps": 1338.5933746695728,
+        "attainment": 0.20625456932965333,
+        "step_ms": 21.731965185391772,
+        "ideal_step_ms": 4.48231712
+      },
+      {
+        "batch": 8,
+        "historical_tps": 263.022,
+        "per_request_tps": 32.87775,
+        "model_roof_tps": 1635.0527046158911,
+        "attainment": 0.16086453926376,
+        "step_ms": 30.415706670924866,
+        "ideal_step_ms": 4.89280864
+      }
+    ],
+    "context_sensitivity": [
+      {
+        "kv_length": 128,
+        "batch_1_roof_tps": 289.50657703357757,
+        "batch_6_roof_tps": 1342.0702224107404
+      },
+      {
+        "kv_length": 8192,
+        "batch_1_roof_tps": 253.1898682570069,
+        "batch_6_roof_tps": 806.0813008871064
+      },
+      {
+        "kv_length": 32768,
+        "batch_1_roof_tps": 183.16512620399567,
+        "batch_6_roof_tps": 363.5677361497998
+      }
+    ],
+    "base_matmul_flops": 1503789056,
+    "gdn_approx_flops": 33030144,
+    "attention_flops_per_context_token": 49152
+  },
+  "fresh_mlx_baseline": [
+    {
+      "batch_size": 1,
+      "trials": [
+        {
+          "prompt_tps": 1390.906,
+          "generation_tps": 158.363,
+          "peak_memory": 0.917,
+          "total_time": 0.504
+        },
+        {
+          "prompt_tps": 1527.313,
+          "generation_tps": 161.428,
+          "peak_memory": 0.947,
+          "total_time": 0.487
+        },
+        {
+          "prompt_tps": 1503.901,
+          "generation_tps": 157.875,
+          "peak_memory": 0.948,
+          "total_time": 0.497
+        }
+      ],
+      "average": {
+        "prompt_tps": 1474.04,
+        "generation_tps": 159.222,
+        "peak_memory": 0.937
+      },
+      "bandwidth_model_roof_tps": 289.3444574934937,
+      "attainment_of_bandwidth_model": 0.55028529448704,
+      "per_request_tps_at_full_batch": 159.222,
+      "trial_generation_tps_min": 157.875,
+      "trial_generation_tps_max": 161.428,
+      "mean_decode_step_ms": 6.280539121478188
+    },
+    {
+      "batch_size": 3,
+      "trials": [
+        {
+          "prompt_tps": 1846.687,
+          "generation_tps": 263.478,
+          "peak_memory": 1.278,
+          "total_time": 0.943
+        },
+        {
+          "prompt_tps": 1852.368,
+          "generation_tps": 259.758,
+          "peak_memory": 1.278,
+          "total_time": 0.954
+        },
+        {
+          "prompt_tps": 1813.024,
+          "generation_tps": 262.268,
+          "peak_memory": 1.278,
+          "total_time": 0.95
+        }
+      ],
+      "average": {
+        "prompt_tps": 1837.36,
+        "generation_tps": 261.835,
+        "peak_memory": 1.278
+      },
+      "bandwidth_model_roof_tps": 775.8794914732706,
+      "attainment_of_bandwidth_model": 0.3374686441354666,
+      "per_request_tps_at_full_batch": 87.27833333333332,
+      "trial_generation_tps_min": 259.758,
+      "trial_generation_tps_max": 263.478,
+      "mean_decode_step_ms": 11.457597341837417
+    },
+    {
+      "batch_size": 6,
+      "trials": [
+        {
+          "prompt_tps": 1833.424,
+          "generation_tps": 285.435,
+          "peak_memory": 1.765,
+          "total_time": 1.779
+        },
+        {
+          "prompt_tps": 1674.426,
+          "generation_tps": 296.685,
+          "peak_memory": 1.849,
+          "total_time": 1.763
+        },
+        {
+          "prompt_tps": 1913.346,
+          "generation_tps": 300.581,
+          "peak_memory": 1.849,
+          "total_time": 1.684
+        }
+      ],
+      "average": {
+        "prompt_tps": 1807.065,
+        "generation_tps": 294.234,
+        "peak_memory": 1.821
+      },
+      "bandwidth_model_roof_tps": 1338.5933746695728,
+      "attainment_of_bandwidth_model": 0.21980834924767997,
+      "per_request_tps_at_full_batch": 49.038999999999994,
+      "trial_generation_tps_min": 285.435,
+      "trial_generation_tps_max": 300.581,
+      "mean_decode_step_ms": 20.391932951324456
+    },
+    {
+      "batch_size": 8,
+      "trials": [
+        {
+          "prompt_tps": 1914.426,
+          "generation_tps": 284.057,
+          "peak_memory": 2.007,
+          "total_time": 2.354
+        },
+        {
+          "prompt_tps": 1926.187,
+          "generation_tps": 308.078,
+          "peak_memory": 2.007,
+          "total_time": 2.209
+        },
+        {
+          "prompt_tps": 1872.603,
+          "generation_tps": 294.218,
+          "peak_memory": 2.007,
+          "total_time": 2.307
+        }
+      ],
+      "average": {
+        "prompt_tps": 1904.405,
+        "generation_tps": 295.451,
+        "peak_memory": 2.007
+      },
+      "bandwidth_model_roof_tps": 1635.0527046158911,
+      "attainment_of_bandwidth_model": 0.18069815068708,
+      "per_request_tps_at_full_batch": 36.931375,
+      "trial_generation_tps_min": 284.057,
+      "trial_generation_tps_max": 308.078,
+      "mean_decode_step_ms": 27.077248003899122
+    }
+  ],
+  "compatibility_probe": {
+    "runtime": {
+      "mlx": "0.32.4",
+      "mlx-lm": "0.32.2"
+    },
+    "cache_types": [
+      "ArraysCache",
+      "ArraysCache",
+      "ArraysCache",
+      "KVCache",
+      "ArraysCache",
+      "ArraysCache",
+      "ArraysCache",
+      "KVCache",
+      "ArraysCache",
+      "ArraysCache",
+      "ArraysCache",
+      "KVCache",
+      "ArraysCache",
+      "ArraysCache",
+      "ArraysCache",
+      "KVCache",
+      "ArraysCache",
+      "ArraysCache",
+      "ArraysCache",
+      "KVCache",
+      "ArraysCache",
+      "ArraysCache",
+      "ArraysCache",
+      "KVCache"
+    ],
+    "default_batch_engine": {
+      "error": "TypeError",
+      "message": "This architecture requires prefix_cache=False"
+    },
+    "projection_fusion": {
+      "error": "ValueError",
+      "message": "Projection types and input shapes must match"
+    },
+    "cache_arrays": [
+      {
+        "layer": 0,
+        "type": "ArraysCache",
+        "arrays": [
+          {
+            "shape": [
+              1,
+              3,
+              6144
+            ],
+            "dtype": "mlx.core.bfloat16",
+            "bytes": 36864
+          },
+          {
+            "shape": [
+              1,
+              16,
+              128,
+              128
+            ],
+            "dtype": "mlx.core.float32",
+            "bytes": 1048576
+          }
+        ]
+      },
+      {
+        "layer": 3,
+        "type": "KVCache",
+        "arrays": [
+          {
+            "shape": [
+              1,
+              2,
+              256,
+              256
+            ],
+            "dtype": "mlx.core.bfloat16",
+            "bytes": 262144
+          },
+          {
+            "shape": [
+              1,
+              2,
+              256,
+              256
+            ],
+            "dtype": "mlx.core.bfloat16",
+            "bytes": 262144
+          }
+        ]
+      }
+    ],
+    "loaded_parameter_bytes": 650168512
+  },
+  "fusion_plan": {
+    "quantized_matrix_calls_before": 187,
+    "same_quantization_grouped_calls_after": 124,
+    "matrix_calls_removed": 63,
+    "uniform_precision_fusion_removed": 90,
+    "heterogeneous_projection_groups": 27,
+    "implemented": false,
+    "warning": "Grouping must preserve original output ordering and quantization; fewer matrix calls do not imply a proportional speedup."
+  },
+  "engineering_targets_not_predictions": {
+    "phase_1_single_tps": [
+      180,
+      200
+    ],
+    "phase_1_batch6_aggregate_tps": [
+      350,
+      450
+    ],
+    "phase_2_single_tps": [
+      200,
+      230
+    ],
+    "phase_2_batch6_aggregate_tps": [
+      600,
+      900
+    ],
+    "bandwidth_utilization_goal": 0.8,
+    "bandwidth_only_80_percent_single_tps": 231.47556599479495,
+    "bandwidth_only_80_percent_batch6_tps": 1070.8746997356582
+  },
+  "vllm_comparison": {
+    "platform": "vllm-metal on the same M1 Pro, not CUDA on a different GPU",
+    "reference_release": "v0.33.0",
+    "reference_release_published_at": "2026-11-04T09:20:18Z",
+    "docs_main_revision": "9318ddc518db19fd379838f0cc1c5882520fb035",
+    "measured": false,
+    "throughput_ratio_vllm_over_liteinfer": null,
+    "reason": "No local vLLM executable was found on PATH and no matched serving benchmark was run. Published measurements found used different hardware, weights or workloads.",
+    "dependency_caveat": "vllm-metal v0.33.0 pins mlx-lm commit 4cfc6478473b0668ede3eb0cc93f2a9181a15052, while local baseline uses mlx-lm 0.32.2; a product comparison includes this difference, a scheduler-only comparison must align the compute stack."
+  },
+  "sources": {
+    "apple_bandwidth": "https://www.apple.com/newsroom/2021/10/introducing-m1-pro-and-m1-max-the-most-powerful-chips-apple-has-ever-built/",
+    "checkpoint_config": "https://huggingface.co/mlx-community/Qwen3.5-0.8B-OptiQ-4bit/blob/3b1584b230cace57814b529694741fefbd82e530/config.json",
+    "checkpoint_weights": "https://huggingface.co/mlx-community/Qwen3.5-0.8B-OptiQ-4bit/blob/3b1584b230cace57814b529694741fefbd82e530/model.safetensors",
+    "mlx_model": "https://github.com/ml-explore/mlx-lm/blob/v0.32.2/mlx_lm/models/qwen3_5.py",
+    "mlx_state_kernel": "https://github.com/ml-explore/mlx-lm/blob/v0.32.2/mlx_lm/models/gated_delta.py",
+    "vllm_metal_release": "https://github.com/vllm-project/vllm-metal/releases/tag/v0.33.0",
+    "vllm_metal_supported_models": "https://github.com/vllm-project/vllm-metal/blob/v0.33.0/docs/supported_models.md",
+    "vllm_metal_benchmarking": "https://github.com/vllm-project/vllm-metal/blob/9318ddc518db19fd379838f0cc1c5882520fb035/docs/benchmarking-macos.md",
+    "vllm_metal_dependency_pin": "https://github.com/vllm-project/vllm-metal/blob/v0.33.0/pyproject.toml"
+  }
+}

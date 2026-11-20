@@ -1,0 +1,41 @@
+{
+  "schema_version": 1,
+  "version": "0.3.0",
+  "date": "2026-11-20",
+  "scope": "Qwen3.5 Python/MLX opt-in small-M experiment; no Swift or Kev changes",
+  "cargo_fmt": true,
+  "cargo_clippy_warnings_as_errors": true,
+  "rust_tests": {
+    "passed": 29,
+    "failed": 0
+  },
+  "mlx_unittest": {
+    "passed": 19,
+    "failed": 0
+  },
+  "qwen35_fusion_pytest": {
+    "passed": 12,
+    "failed": 0
+  },
+  "release_build": true,
+  "python_sdist_and_wheel_build": true,
+  "installed_wheel_cli_smoke": {
+    "batches": [
+      1,
+      8
+    ],
+    "baseline": true,
+    "small_m": true,
+    "max_output_tokens": 4
+  },
+  "stored_benchmark_medians_recomputed": true,
+  "experimental_default_enabled": false,
+  "strict_output_parity_passed": false,
+  "original_300_1600_speed_targets_passed": false,
+  "performance_source": "qwen35-smallm-final-ab.json",
+  "source_sha256": {
+    "backends/mlx/liteinfer_mlx/qwen35_small_m.py": "9e26a66fc23bc389f8ac03a4aed0949eb608d2079766ec5c45e01aed5317147f",
+    "backends/mlx/liteinfer_mlx/qwen35_fusion.py": "c1f7d8da1cad2272fcd9651cfe40a6fecbcaa912fa62f2e7477af2dca1ab8c52",
+    "benchmarks/qwen35-smallm-final-ab.json": "577ca8649fdd1717e49ddd746cc8948178f71325d68bbe3056a0367fa08674df"
+  }
+}

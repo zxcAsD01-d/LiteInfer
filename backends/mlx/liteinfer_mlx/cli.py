@@ -27,6 +27,8 @@ def arguments() -> argparse.Namespace:
     parser.add_argument("--top-p", type=float, default=0.9)
     parser.add_argument("--seed", type=int, default=0)
     parser.add_argument("--fuse-llama", action="store_true")
+    parser.add_argument("--qwen35-small-m", action="store_true",
+                        help="Use experimental M=6..8 mixed-bit Metal matrix kernels")
     parser.add_argument("--no-prefix-cache", action="store_true")
     parser.add_argument("--raw", action="store_true", help="Skip chat template explicitly")
     return parser.parse_args()
@@ -34,9 +36,11 @@ def arguments() -> argparse.Namespace:
 
 def main() -> None:
     args = arguments()
+    if args.fuse_llama and args.qwen35_small_m:
+        raise ValueError("Choose only one model-specific optimization")
     sampling = SamplingConfig(args.temperature, args.top_k, args.top_p, args.seed)
     config = BatchConfig(concurrency=args.concurrency, queue_capacity=len(args.prompt),
-                         prefix_cache=not args.no_prefix_cache)
+                         prefix_cache=not (args.no_prefix_cache or args.qwen35_small_m))
     if args.tokenizer:
         model, _ = load_model(Path(args.model))
         tokenizer = load_tokenizer(Path(args.tokenizer))
@@ -44,6 +48,9 @@ def main() -> None:
         model, tokenizer = load(args.model)
     if args.fuse_llama:
         fuse_model(model)
+    if args.qwen35_small_m:
+        from .qwen35_small_m import enable_qwen35_small_m
+        enable_qwen35_small_m(model)
     stop_tokens = [[token] for token in tokenizer.eos_token_ids]
     engine = BatchEngine(model, "qwen3.5-0.8b", config, stop_tokens, len(tokenizer))
     try:

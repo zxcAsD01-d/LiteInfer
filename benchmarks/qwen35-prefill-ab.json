@@ -1,0 +1,474 @@
+{
+  "date": "2026-11-20",
+  "hardware": {
+    "device_name": "Apple M1 Pro",
+    "max_recommended_working_set_size": 12713115648,
+    "memory_size": 17179869184,
+    "architecture": "applegpu_g13s",
+    "max_buffer_length": 9534832640,
+    "resource_limit": 499000
+  },
+  "runtime": {
+    "mlx": "0.32.4",
+    "mlx_lm": "0.32.2"
+  },
+  "model": "Qwen3.5-0.8B-OptiQ-4bit",
+  "optimization": "small-m",
+  "method": {
+    "prompt_tokens": 128,
+    "generation_tokens": 64,
+    "concurrent_requests_per_trial": [
+      1,
+      6,
+      8
+    ],
+    "warmups_per_case": 2,
+    "timing_trials_per_case": 5,
+    "throughput": "BatchEngine BatchStats decode tokens/s; wall-rate reported separately",
+    "prefill_throughput": "BatchStats prompt_tokens / prompt_time; aggregate input tokens/s",
+    "prefill_scope": "Last input token per request is counted in generation, not prefill",
+    "time_to_first_token": "Submit-to-first-TokenEvent wall time; excludes model load, tokenization and HTTP",
+    "prefix_cache": false
+  },
+  "small_m_wrapped_layers": {
+    "quantized_linear": 186,
+    "quantized_embedding": 1
+  },
+  "qwen35_fusion": null,
+  "targets": {
+    "single_request_tokens_per_second": 300.0,
+    "batch8_aggregate_tokens_per_second": 1600.0,
+    "achieved": false
+  },
+  "cases": {
+    "1": {
+      "baseline": {
+        "prefill_median_tokens_per_second": 1538.962563691984,
+        "prefill_min_tokens_per_second": 1350.4897567127373,
+        "prefill_max_tokens_per_second": 1580.838248809828,
+        "prefill_median_seconds": 0.0825231249909848,
+        "time_to_first_token_median_seconds": 0.1015320000005886,
+        "decode_median_tokens_per_second": 137.69750752247884,
+        "decode_min_tokens_per_second": 129.94111442124438,
+        "decode_max_tokens_per_second": 143.94020162698627,
+        "end_to_end_median_tokens_per_second": 116.39245217217197,
+        "trials": [
+          {
+            "prefill_tokens": 127,
+            "prefill_seconds": 0.0825231249909848,
+            "prefill_tokens_per_second": 1538.962563691984,
+            "mean_time_to_first_token_seconds": 0.1015320000005886,
+            "decode_tokens_per_second": 129.94111442124438,
+            "end_to_end_tokens_per_second": 111.28753373058858,
+            "seconds": 0.5750868750037625,
+            "completion_tokens": 64,
+            "peak_memory_bytes": 1570504550
+          },
+          {
+            "prefill_tokens": 127,
+            "prefill_seconds": 0.08099283299816307,
+            "prefill_tokens_per_second": 1568.0399771036577,
+            "mean_time_to_first_token_seconds": 0.1004067079993547,
+            "decode_tokens_per_second": 142.82113184816225,
+            "end_to_end_tokens_per_second": 120.95236752706158,
+            "seconds": 0.5291339169998537,
+            "completion_tokens": 64,
+            "peak_memory_bytes": 1599213426
+          },
+          {
+            "prefill_tokens": 127,
+            "prefill_seconds": 0.08033712500036927,
+            "prefill_tokens_per_second": 1580.838248809828,
+            "mean_time_to_first_token_seconds": 0.0987300829947344,
+            "decode_tokens_per_second": 143.94020162698627,
+            "end_to_end_tokens_per_second": 121.9059229136067,
+            "seconds": 0.5249949999997625,
+            "completion_tokens": 64,
+            "peak_memory_bytes": 1599213426
+          },
+          {
+            "prefill_tokens": 127,
+            "prefill_seconds": 0.08364416699623689,
+            "prefill_tokens_per_second": 1518.3365984828765,
+            "mean_time_to_first_token_seconds": 0.10280616700038081,
+            "decode_tokens_per_second": 137.28397781521684,
+            "end_to_end_tokens_per_second": 116.39245217217197,
+            "seconds": 0.5498638339995523,
+            "completion_tokens": 64,
+            "peak_memory_bytes": 1599213426
+          },
+          {
+            "prefill_tokens": 127,
+            "prefill_seconds": 0.09403995799948461,
+            "prefill_tokens_per_second": 1350.4897567127373,
+            "mean_time_to_first_token_seconds": 0.12165845800336683,
+            "decode_tokens_per_second": 137.69750752247884,
+            "end_to_end_tokens_per_second": 114.51955052814024,
+            "seconds": 0.5588565420039231,
+            "completion_tokens": 64,
+            "peak_memory_bytes": 1599213426
+          }
+        ]
+      },
+      "optimized": {
+        "prefill_median_tokens_per_second": 1514.9828281051173,
+        "prefill_min_tokens_per_second": 1395.5903324006747,
+        "prefill_max_tokens_per_second": 1554.5476509298026,
+        "prefill_median_seconds": 0.08382933300890727,
+        "time_to_first_token_median_seconds": 0.10387350000382867,
+        "decode_median_tokens_per_second": 142.48638914134656,
+        "decode_min_tokens_per_second": 141.62649930539465,
+        "decode_max_tokens_per_second": 144.35171768475857,
+        "end_to_end_median_tokens_per_second": 120.5488361717835,
+        "trials": [
+          {
+            "prefill_tokens": 127,
+            "prefill_seconds": 0.09100091699656332,
+            "prefill_tokens_per_second": 1395.5903324006747,
+            "mean_time_to_first_token_seconds": 0.11118720800004667,
+            "decode_tokens_per_second": 141.62649930539465,
+            "end_to_end_tokens_per_second": 117.87951332405878,
+            "seconds": 0.5429272499968647,
+            "completion_tokens": 64,
+            "peak_memory_bytes": 1599213426,
+            "output_token_mismatches": 0
+          },
+          {
+            "prefill_tokens": 127,
+            "prefill_seconds": 0.08169579100649571,
+            "prefill_tokens_per_second": 1554.5476509298026,
+            "mean_time_to_first_token_seconds": 0.10387350000382867,
+            "decode_tokens_per_second": 142.48638914134656,
+            "end_to_end_tokens_per_second": 120.5488361717835,
+            "seconds": 0.5309051670046756,
+            "completion_tokens": 64,
+            "peak_memory_bytes": 1595641574,
+            "output_token_mismatches": 0
+          },
+          {
+            "prefill_tokens": 127,
+            "prefill_seconds": 0.08382933300890727,
+            "prefill_tokens_per_second": 1514.9828281051173,
+            "mean_time_to_first_token_seconds": 0.10327662499912549,
+            "decode_tokens_per_second": 143.67291962259466,
+            "end_to_end_tokens_per_second": 120.90937078875356,
+            "seconds": 0.5293220829989878,
+            "completion_tokens": 64,
+            "peak_memory_bytes": 1599213426,
+            "output_token_mismatches": 0
+          },
+          {
+            "prefill_tokens": 127,
+            "prefill_seconds": 0.08457700099097565,
+            "prefill_tokens_per_second": 1501.590249263519,
+            "mean_time_to_first_token_seconds": 0.1078926659974968,
+            "decode_tokens_per_second": 144.35171768475857,
+            "end_to_end_tokens_per_second": 121.20859170078295,
+            "seconds": 0.5280153749990859,
+            "completion_tokens": 64,
+            "peak_memory_bytes": 1599213426,
+            "output_token_mismatches": 0
+          },
+          {
+            "prefill_tokens": 127,
+            "prefill_seconds": 0.08268500000122003,
+            "prefill_tokens_per_second": 1535.9496885544668,
+            "mean_time_to_first_token_seconds": 0.10186183400219306,
+            "decode_tokens_per_second": 142.14508198330972,
+            "end_to_end_tokens_per_second": 120.08267880069059,
+            "seconds": 0.5329661249998026,
+            "completion_tokens": 64,
+            "peak_memory_bytes": 1599213426,
+            "output_token_mismatches": 0
+          }
+        ]
+      }
+    },
+    "6": {
+      "baseline": {
+        "prefill_median_tokens_per_second": 1796.8781025577791,
+        "prefill_min_tokens_per_second": 1642.8353138591172,
+        "prefill_max_tokens_per_second": 1816.1566453367354,
+        "prefill_median_seconds": 0.4240688330028206,
+        "time_to_first_token_median_seconds": 0.4759243750013411,
+        "decode_median_tokens_per_second": 282.4735116723592,
+        "decode_min_tokens_per_second": 273.77132553758605,
+        "decode_max_tokens_per_second": 283.4252158773269,
+        "end_to_end_median_tokens_per_second": 214.65335703187657,
+        "trials": [
+          {
+            "prefill_tokens": 762,
+            "prefill_seconds": 0.4236183750035707,
+            "prefill_tokens_per_second": 1798.788827310848,
+            "mean_time_to_first_token_seconds": 0.4721159170003375,
+            "decode_tokens_per_second": 283.4252158773269,
+            "end_to_end_tokens_per_second": 215.91042918010638,
+            "seconds": 1.7785152920041583,
+            "completion_tokens": 384,
+            "peak_memory_bytes": 2497619142
+          },
+          {
+            "prefill_tokens": 762,
+            "prefill_seconds": 0.4240688330028206,
+            "prefill_tokens_per_second": 1796.8781025577791,
+            "mean_time_to_first_token_seconds": 0.47718183300457895,
+            "decode_tokens_per_second": 282.4735116723592,
+            "end_to_end_tokens_per_second": 215.30044184790765,
+            "seconds": 1.7835541660024319,
+            "completion_tokens": 384,
+            "peak_memory_bytes": 2467833002
+          },
+          {
+            "prefill_tokens": 762,
+            "prefill_seconds": 0.4638322499959031,
+            "prefill_tokens_per_second": 1642.8353138591172,
+            "mean_time_to_first_token_seconds": 0.5189840829989407,
+            "decode_tokens_per_second": 282.61442019303564,
+            "end_to_end_tokens_per_second": 210.68599070578708,
+            "seconds": 1.8226176249954733,
+            "completion_tokens": 384,
+            "peak_memory_bytes": 2497619142
+          },
+          {
+            "prefill_tokens": 762,
+            "prefill_seconds": 0.419567333003215,
+            "prefill_tokens_per_second": 1816.1566453367354,
+            "mean_time_to_first_token_seconds": 0.4699839589957264,
+            "decode_tokens_per_second": 280.4295415536807,
+            "end_to_end_tokens_per_second": 214.65335703187657,
+            "seconds": 1.7889307919977,
+            "completion_tokens": 384,
+            "peak_memory_bytes": 2497619142
+          },
+          {
+            "prefill_tokens": 762,
+            "prefill_seconds": 0.42720983299659565,
+            "prefill_tokens_per_second": 1783.6668099492742,
+            "mean_time_to_first_token_seconds": 0.4759243750013411,
+            "decode_tokens_per_second": 273.77132553758605,
+            "end_to_end_tokens_per_second": 209.84952518520709,
+            "seconds": 1.829882624995662,
+            "completion_tokens": 384,
+            "peak_memory_bytes": 2497619142
+          }
+        ]
+      },
+      "optimized": {
+        "prefill_median_tokens_per_second": 1786.1127957982505,
+        "prefill_min_tokens_per_second": 1749.0436059869535,
+        "prefill_max_tokens_per_second": 1815.722616625285,
+        "prefill_median_seconds": 0.4266247920022579,
+        "time_to_first_token_median_seconds": 0.47593862500070827,
+        "decode_median_tokens_per_second": 285.20896291497723,
+        "decode_min_tokens_per_second": 281.0298705253939,
+        "decode_max_tokens_per_second": 292.82317306030956,
+        "end_to_end_median_tokens_per_second": 216.57709682726286,
+        "trials": [
+          {
+            "prefill_tokens": 762,
+            "prefill_seconds": 0.43073058300069533,
+            "prefill_tokens_per_second": 1769.0872904624232,
+            "mean_time_to_first_token_seconds": 0.48230379100277787,
+            "decode_tokens_per_second": 287.38835667728085,
+            "end_to_end_tokens_per_second": 217.32506658543488,
+            "seconds": 1.7669383750035195,
+            "completion_tokens": 384,
+            "peak_memory_bytes": 2499208390,
+            "output_token_mismatches": 63
+          },
+          {
+            "prefill_tokens": 762,
+            "prefill_seconds": 0.4356666679959744,
+            "prefill_tokens_per_second": 1749.0436059869535,
+            "mean_time_to_first_token_seconds": 0.48889758300356334,
+            "decode_tokens_per_second": 284.6964184872044,
+            "end_to_end_tokens_per_second": 215.18469879855837,
+            "seconds": 1.7845135000025039,
+            "completion_tokens": 384,
+            "peak_memory_bytes": 2497619142,
+            "output_token_mismatches": 76
+          },
+          {
+            "prefill_tokens": 762,
+            "prefill_seconds": 0.41966762600350194,
+            "prefill_tokens_per_second": 1815.722616625285,
+            "mean_time_to_first_token_seconds": 0.4718609589981497,
+            "decode_tokens_per_second": 292.82317306030956,
+            "end_to_end_tokens_per_second": 221.82754121795796,
+            "seconds": 1.7310744999995222,
+            "completion_tokens": 384,
+            "peak_memory_bytes": 2497619142,
+            "output_token_mismatches": 0
+          },
+          {
+            "prefill_tokens": 762,
+            "prefill_seconds": 0.42531249900639523,
+            "prefill_tokens_per_second": 1791.6238102105299,
+            "mean_time_to_first_token_seconds": 0.47593862500070827,
+            "decode_tokens_per_second": 281.0298705253939,
+            "end_to_end_tokens_per_second": 214.30960789389164,
+            "seconds": 1.7918002079968574,
+            "completion_tokens": 384,
+            "peak_memory_bytes": 2497619142,
+            "output_token_mismatches": 32
+          },
+          {
+            "prefill_tokens": 762,
+            "prefill_seconds": 0.4266247920022579,
+            "prefill_tokens_per_second": 1786.1127957982505,
+            "mean_time_to_first_token_seconds": 0.47558650000428315,
+            "decode_tokens_per_second": 285.20896291497723,
+            "end_to_end_tokens_per_second": 216.57709682726286,
+            "seconds": 1.7730406660048175,
+            "completion_tokens": 384,
+            "peak_memory_bytes": 2497619142,
+            "output_token_mismatches": 37
+          }
+        ]
+      }
+    },
+    "8": {
+      "baseline": {
+        "prefill_median_tokens_per_second": 1824.9762196680551,
+        "prefill_min_tokens_per_second": 1694.3377000099233,
+        "prefill_max_tokens_per_second": 1830.9231395777424,
+        "prefill_median_seconds": 0.5567195830008131,
+        "time_to_first_token_median_seconds": 0.6232272499983083,
+        "decode_median_tokens_per_second": 290.09420359986024,
+        "decode_min_tokens_per_second": 282.5633314972497,
+        "decode_max_tokens_per_second": 291.8406317800259,
+        "end_to_end_median_tokens_per_second": 216.5808389308616,
+        "trials": [
+          {
+            "prefill_tokens": 1016,
+            "prefill_seconds": 0.5566103340024711,
+            "prefill_tokens_per_second": 1825.3344178757009,
+            "mean_time_to_first_token_seconds": 0.6194372910031234,
+            "decode_tokens_per_second": 282.5633314972497,
+            "end_to_end_tokens_per_second": 216.1585861277749,
+            "seconds": 2.3686313330035773,
+            "completion_tokens": 512,
+            "peak_memory_bytes": 2655316576
+          },
+          {
+            "prefill_tokens": 1016,
+            "prefill_seconds": 0.5567195830008131,
+            "prefill_tokens_per_second": 1824.9762196680551,
+            "mean_time_to_first_token_seconds": 0.6232272499983083,
+            "decode_tokens_per_second": 291.8406317800259,
+            "end_to_end_tokens_per_second": 221.5364311995505,
+            "seconds": 2.3111322920012753,
+            "completion_tokens": 512,
+            "peak_memory_bytes": 2655316576
+          },
+          {
+            "prefill_tokens": 1016,
+            "prefill_seconds": 0.5706837499965332,
+            "prefill_tokens_per_second": 1780.3205365601739,
+            "mean_time_to_first_token_seconds": 0.6418557920042076,
+            "decode_tokens_per_second": 284.7007608546973,
+            "end_to_end_tokens_per_second": 216.115182185766,
+            "seconds": 2.3691070420027245,
+            "completion_tokens": 512,
+            "peak_memory_bytes": 2655316576
+          },
+          {
+            "prefill_tokens": 1016,
+            "prefill_seconds": 0.5549113329980173,
+            "prefill_tokens_per_second": 1830.9231395777424,
+            "mean_time_to_first_token_seconds": 0.6182062500010943,
+            "decode_tokens_per_second": 290.09420359986024,
+            "end_to_end_tokens_per_second": 220.70044447530992,
+            "seconds": 2.3198865829981514,
+            "completion_tokens": 512,
+            "peak_memory_bytes": 2655316576
+          },
+          {
+            "prefill_tokens": 1016,
+            "prefill_seconds": 0.5996443330004695,
+            "prefill_tokens_per_second": 1694.3377000099233,
+            "mean_time_to_first_token_seconds": 0.6640491250000196,
+            "decode_tokens_per_second": 290.1954121776813,
+            "end_to_end_tokens_per_second": 216.5808389308616,
+            "seconds": 2.3640133749941015,
+            "completion_tokens": 512,
+            "peak_memory_bytes": 2655316576
+          }
+        ]
+      },
+      "optimized": {
+        "prefill_median_tokens_per_second": 1815.5579568099029,
+        "prefill_min_tokens_per_second": 1718.0743193856092,
+        "prefill_max_tokens_per_second": 1837.6494316203027,
+        "prefill_median_seconds": 0.5596075829962501,
+        "time_to_first_token_median_seconds": 0.6049912500020582,
+        "decode_median_tokens_per_second": 430.5557059322658,
+        "decode_min_tokens_per_second": 421.71521797626343,
+        "decode_max_tokens_per_second": 437.7501978027873,
+        "end_to_end_median_tokens_per_second": 291.84145670869617,
+        "trials": [
+          {
+            "prefill_tokens": 1016,
+            "prefill_seconds": 0.5549608750006882,
+            "prefill_tokens_per_second": 1830.7596909399062,
+            "mean_time_to_first_token_seconds": 0.6003996250001364,
+            "decode_tokens_per_second": 437.7501978027873,
+            "end_to_end_tokens_per_second": 296.8792955899357,
+            "seconds": 1.724606625000888,
+            "completion_tokens": 512,
+            "peak_memory_bytes": 2655316576,
+            "output_token_mismatches": 50
+          },
+          {
+            "prefill_tokens": 1016,
+            "prefill_seconds": 0.562012209004024,
+            "prefill_tokens_per_second": 1807.78990869347,
+            "mean_time_to_first_token_seconds": 0.6067593339976156,
+            "decode_tokens_per_second": 421.71521797626343,
+            "end_to_end_tokens_per_second": 288.2669779575826,
+            "seconds": 1.7761312919974444,
+            "completion_tokens": 512,
+            "peak_memory_bytes": 2655316576,
+            "output_token_mismatches": 0
+          },
+          {
+            "prefill_tokens": 1016,
+            "prefill_seconds": 0.5528802080079913,
+            "prefill_tokens_per_second": 1837.6494316203027,
+            "mean_time_to_first_token_seconds": 0.6000130829997943,
+            "decode_tokens_per_second": 435.6267835647189,
+            "end_to_end_tokens_per_second": 296.25483553499305,
+            "seconds": 1.728241832999629,
+            "completion_tokens": 512,
+            "peak_memory_bytes": 2655316576,
+            "output_token_mismatches": 15
+          },
+          {
+            "prefill_tokens": 1016,
+            "prefill_seconds": 0.5913597500039032,
+            "prefill_tokens_per_second": 1718.0743193856092,
+            "mean_time_to_first_token_seconds": 0.647830415997305,
+            "decode_tokens_per_second": 430.5557059322658,
+            "end_to_end_tokens_per_second": 287.55087249489276,
+            "seconds": 1.780554500001017,
+            "completion_tokens": 512,
+            "peak_memory_bytes": 2655316576,
+            "output_token_mismatches": 0
+          },
+          {
+            "prefill_tokens": 1016,
+            "prefill_seconds": 0.5596075829962501,
+            "prefill_tokens_per_second": 1815.5579568099029,
+            "mean_time_to_first_token_seconds": 0.6049912500020582,
+            "decode_tokens_per_second": 428.5490533846631,
+            "end_to_end_tokens_per_second": 291.84145670869617,
+            "seconds": 1.754377208002552,
+            "completion_tokens": 512,
+            "peak_memory_bytes": 2655316576,
+            "output_token_mismatches": 53
+          }
+        ]
+      }
+    }
+  }
+}

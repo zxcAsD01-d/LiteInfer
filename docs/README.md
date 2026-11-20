@@ -17,3 +17,4 @@
 - [网页模型管理与自动配置](model-management.md)：HuggingFace / ModelScope 镜像、安装运行环境、MLX 转换、模型校验和运行时应用。
 - [Valen Decisions 本地 API](valen-decisions.md)：决策模型注册、多模态请求和 usage 处理。
 - [Valen MLX 转换与基准](valen-mlx.md)：原生检查点转换、q8/q4 速度与误差、手写 Metal 算子验证。
+- [Qwen3.5 small-M 实验与性能分析](qwen35-performance-analysis.md)：混合 4/8-bit 内核、交错 A/B、预填充与解码口径、数值风险及带宽模型。
